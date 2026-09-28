@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Regional Progress & Validation Dashboard · Batch Assignment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f1f4f9; --surface: #ffffff; --surface-2: #f8fafc;
+    --ink: #0f172a; --ink-soft: #475569; --muted: #94a3b8;
+    --border: #e6eaf1; --brand: #4f46e5; --brand-2: #6366f1;
+    --brand-soft: #eef0ff; --good: #059669; --good-bg: #ecfdf5;
+    --bad: #dc2626; --bad-bg: #fef2f2; --warn: #b45309; --warn-bg: #fffbeb;
+    --shadow: 0 1px 2px rgba(15,23,42,0.04), 0 12px 32px -12px rgba(15,23,42,0.12);
+    --radius: 18px;
+  }
+  :root:not([data-theme="light"]) { @media (prefers-color-scheme: dark) {
+      --bg: #0b0f1a; --surface: #131826; --surface-2: #171e2e;
+      --ink: #f1f5f9; --ink-soft: #cbd5e1; --muted: #7c8aa5;
+      --border: #232b3d; --brand-soft: #1c2040; --good-bg: #052e21;
+      --bad-bg: #3a1414; --warn-bg: #3a2a0a;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -12px rgba(0,0,0,0.5);
+  }}
+  :root[data-theme="dark"] {
+    --bg: #0b0f1a; --surface: #131826; --surface-2: #171e2e;
+    --ink: #f1f5f9; --ink-soft: #cbd5e1; --muted: #7c8aa5;
+    --border: #232b3d; --brand-soft: #1c2040; --good-bg: #052e21;
+    --bad-bg: #3a1414; --warn-bg: #3a2a0a;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px -12px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--ink);
+    padding: env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px) 0; }
+  .wrap { max-width:1180px; margin:0 auto; padding:32px 20px 56px; }
+  .top { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:28px; flex-wrap:wrap; }
+  .top-left .eyebrow { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--brand); margin:0 0 6px; }
+  .top-left h1 { margin:0; font-size:26px; font-weight:800; letter-spacing:-.02em; }
+  .top-left p { margin:6px 0 0; font-size:13.5px; color:var(--ink-soft); }
+  .date-chip { display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow); padding:10px 16px; border-radius:999px; font-size:13px; font-weight:600; white-space:nowrap; }
+
+  /* HERO COMPLETION RATE */
+  .hero { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:28px 28px 24px; margin-bottom:24px; position:relative; overflow:hidden; }
+  .hero::before { content:""; position:absolute; top:0; left:0; right:0; height:4px;
+    background:linear-gradient(90deg, var(--brand), #0891b2, #d97706); }
+  .hero-top { display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:16px; margin-bottom:20px; }
+  .hero-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:6px; }
+  .hero-num { font-family:'JetBrains Mono',monospace; font-size:52px; font-weight:700; line-height:1; letter-spacing:-.03em; }
+  .hero-num .pct { font-size:28px; opacity:.55; margin-left:4px; }
+  .hero-sub { font-size:13.5px; color:var(--ink-soft); margin-top:8px; font-weight:600; }
+  .hero-sub b { font-family:'JetBrains Mono',monospace; color:var(--ink); }
+  .hero-badges { display:flex; gap:8px; flex-wrap:wrap; }
+  .hero-bar-wrap { position:relative; margin-bottom:14px; }
+  .hero-bar { height:20px; background:var(--surface-2); border:1px solid var(--border); border-radius:999px; overflow:hidden; position:relative; }
+  .hero-bar-fill { height:100%; background:linear-gradient(90deg, var(--brand), #0891b2); border-radius:999px;
+    transition:width .6s ease; box-shadow:0 0 20px rgba(79,70,229,.35); }
+  .hero-marker { position:absolute; top:-4px; width:3px; height:28px; background:var(--ink); border-radius:2px; transition:left .6s ease; }
+  .hero-marker::after { content:"WE ARE HERE"; position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+    font-size:9px; font-weight:800; letter-spacing:.06em; color:var(--ink); white-space:nowrap;
+    background:var(--surface); padding:2px 6px; border-radius:4px; border:1px solid var(--border); }
+  .hero-scale { display:flex; justify-content:space-between; font-size:11px; font-weight:600; color:var(--muted); font-family:'JetBrains Mono',monospace; }
+  .hero-legend { display:flex; gap:20px; flex-wrap:wrap; margin-top:16px; padding-top:16px; border-top:1px dashed var(--border); }
+  .hero-legend-item { display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink-soft); font-weight:600; }
+  .hero-legend-item .sw { width:12px; height:12px; border-radius:3px; }
+  .hero-legend-item .val { font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--ink); }
+
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
+  .kpi { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; position:relative; overflow:hidden; }
+  .kpi::before { content:""; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg, var(--brand), var(--brand-2)); }
+  .kpi-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .kpi-value { font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; margin-top:8px; letter-spacing:-.01em; }
+  .kpi-sub { margin-top:8px; font-size:12.5px; font-weight:600; display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:999px; }
+  .up { color:var(--good); background:var(--good-bg); }
+  .down { color:var(--bad); background:var(--bad-bg); }
+  .neutral { color:var(--ink-soft); background:var(--surface-2); }
+
+  .section-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin:0 0 14px; display:flex; align-items:center; gap:8px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:28px; }
+  .table-scroll { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; min-width:720px; }
+  thead th { text-align:left; padding:14px 16px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); background:var(--surface-2); border-bottom:1px solid var(--border); white-space:nowrap; }
+  tbody td { padding:14px 16px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:var(--surface-2); }
+  tr.total td { font-weight:800; background:var(--brand-soft); border-top:2px solid var(--border); }
+  .loc { font-weight:700; }
+  .mono { font-family:'JetBrains Mono',monospace; }
+  .pct-bar-wrap { display:flex; align-items:center; gap:8px; }
+  .pct-track { width:60px; height:6px; border-radius:999px; background:var(--surface-2); overflow:hidden; flex-shrink:0; }
+  .pct-fill { height:100%; border-radius:999px; background:linear-gradient(90deg, var(--brand), var(--brand-2)); }
+  .badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px; font-size:11px; font-weight:700; }
+  .badge-live { background:var(--good-bg); color:var(--good); }
+  .badge-wait { background:var(--warn-bg); color:var(--warn); }
+  .badge-hi { background:var(--brand-soft); color:var(--brand); }
+  .badge-elig { background:#ecfdf5; color:#059669; }
+  .badge-inelig { background:#fef2f2; color:#dc2626; }
+  .badge-defer { background:#fffbeb; color:#b45309; }
+  .badge-dec { background:#f3f4f6; color:#6b7280; }
+  .badge-live::before,.badge-wait::before,.badge-hi::before,
+  .badge-elig::before,.badge-inelig::before,.badge-defer::before,.badge-dec::before { content:"●"; font-size:8px; }
+
+  .highlights { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px; }
+  .h-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; }
+  .h-card h3 { margin:0 0 14px; font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; gap:8px; }
+  .h-list { list-style:none; margin:0; padding:0; }
+  .h-list li { display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px dashed var(--border); font-size:13.5px; }
+  .h-list li:last-child { border-bottom:none; }
+  .h-rank { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:6px; background:var(--brand-soft); color:var(--brand); font-size:11px; font-weight:800; margin-right:10px; flex-shrink:0; }
+  .h-name { display:flex; align-items:center; }
+  .h-val { font-family:'JetBrains Mono',monospace; font-weight:700; }
+  .h-sub { color:var(--muted); font-size:11.5px; font-weight:500; margin-left:6px; }
+
+  .insights { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px; }
+  .insights h3 { margin:0 0 14px; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; gap:8px; }
+  .insight-item { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+  .insight-item:last-child { border-bottom:none; padding-bottom:0; }
+  .insight-icon { width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .ic-down { background:var(--bad-bg); } .ic-up { background:var(--good-bg); } .ic-warn { background:var(--warn-bg); }
+  .insight-text { font-size:13.5px; color:var(--ink-soft); line-height:1.55; }
+  .insight-text strong { color:var(--ink); }
+
+  @media (max-width:760px) { .kpi-grid{grid-template-columns:1fr 1fr;} .highlights{grid-template-columns:1fr;} .top{flex-direction:column;} }
+  @media (max-width:480px) { .kpi-grid{grid-template-columns:1fr;} .hero-num{font-size:38px;} }
+
+  .tools { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; }
+  .tools input { font:inherit; font-size:13px; padding:8px 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); color:var(--ink); }
+  .chip { font:inherit; font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px; border:1px solid var(--border); background:var(--surface); color:var(--ink-soft); cursor:pointer; }
+  .chip.on { background:var(--brand); border-color:var(--brand); color:#fff; }
+  .st th:first-child,.st td:first-child { position:sticky; left:0; background:var(--surface); z-index:1; }
+  .st thead th { position:sticky; top:0; z-index:2; cursor:pointer; }
+  .st thead th:first-child { z-index:3; background:var(--surface-2); }
+  .st tfoot td { font-weight:800; background:var(--brand-soft); position:sticky; bottom:0; border-top:2px solid var(--border); }
+  .dc { text-align:right; color:var(--ink-soft); }
+  .st .pct-track { width:70px; }
+  .legend { display:flex; flex-wrap:wrap; gap:16px; font-size:12px; color:var(--ink-soft); margin-top:6px; }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; }
+  svg .c1,.legend .c1{fill:var(--brand);background:var(--brand)}svg .c2,.legend .c2{fill:#0891b2;background:#0891b2}svg .c3,.legend .c3{fill:#d97706;background:#d97706}
+  svg .lb{font:700 12px 'JetBrains Mono',monospace;fill:var(--ink)}svg .ax{font:600 11px Inter,sans-serif;fill:var(--muted)}
+  @media(max-width:760px){.highlights[style]{grid-template-columns:1fr!important}}
+
+  .tabnav { display:flex; gap:6px; margin-bottom:20px; border-bottom:1px solid var(--border); overflow-x:auto; }
+  .tabnav button { font:inherit; font-size:13.5px; font-weight:700; padding:10px 16px; border:none; background:transparent; color:var(--ink-soft); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; }
+  .tabnav button.active { color:var(--brand); border-bottom-color:var(--brand); }
+  .tab-panel { display:none; } .tab-panel.active { display:block; }
+  @media print { .tabnav{display:none} .tab-panel{display:block !important;margin-bottom:32px} }
+
+  .split-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px; }
+  @media (max-width:760px) { .split-grid { grid-template-columns:1fr; } }
+  .split-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; }
+  .split-card h4 { margin:0 0 14px; font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; display:flex; align-items:center; gap:8px; color:var(--ink-soft); }
+  .split-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--border); }
+  .split-row:last-child { border-bottom:none; }
+  .split-label { flex:1; font-size:13px; font-weight:600; }
+  .split-track { flex:1.2; height:8px; background:var(--surface-2); border-radius:999px; overflow:hidden; }
+  .split-fill { height:100%; border-radius:999px; }
+  .split-val { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; min-width:60px; text-align:right; }
+
+  /* BATCH ASSIGNMENT TAB */
+  .batch-kpi-note { margin-top:8px; font-size:12px; color:var(--ink-soft); font-weight:600; }
+  .batch-num { text-align:right; font-weight:700; }
+  .batch-num.b1, .batch-table .b1 { background:rgba(79,70,229,.055); }
+  .batch-num.b2, .batch-table .b2 { background:rgba(8,145,178,.055); }
+  .batch-num.b3, .batch-table .b3 { background:rgba(217,119,6,.07); }
+  .batch-num.gt, .batch-table .gt { background:var(--brand-soft); }
+  .batch-table tbody tr:hover td { background:var(--surface-2); }
+  .batch-toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:14px 16px 10px; }
+  .batch-toolbar input { font:inherit; font-size:13px; padding:8px 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); color:var(--ink); min-width:220px; }
+  .batch-chip { font:inherit; font-size:12px; font-weight:700; padding:6px 11px; border-radius:999px; border:1px solid var(--border); background:var(--surface); color:var(--ink-soft); cursor:pointer; }
+  .batch-chip.on { background:var(--brand); border-color:var(--brand); color:#fff; }
+  .batch-meta { margin-left:auto; color:var(--muted); font-size:11.5px; font-weight:600; }
+  .batch-legend { display:flex; flex-wrap:wrap; gap:16px; padding:0 16px 14px; color:var(--ink-soft); font-size:12px; }
+  .batch-legend span { display:inline-flex; align-items:center; gap:7px; font-weight:600; }
+  .batch-legend i { width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .b1-swatch { background:var(--brand); } .b2-swatch { background:#0891b2; } .b3-swatch { background:#d97706; } .gt-swatch { background:var(--ink); }
+  .batch-table th, .batch-table td { white-space:nowrap; }
+  .batch-table thead th { cursor:pointer; position:sticky; top:0; z-index:2; }
+  .batch-table thead th:first-child { z-index:3; }
+  .batch-table tfoot td { font-weight:800; background:var(--brand-soft); position:sticky; bottom:0; border-top:2px solid var(--border); }
+  .batch-area-card { padding:18px 20px; }
+  .area-row { display:grid; grid-template-columns:150px 1fr auto; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--border); }
+  .area-row:last-child { border-bottom:none; }
+  .area-label { font-size:13px; font-weight:700; }
+  .area-track { height:8px; background:var(--surface-2); border-radius:999px; overflow:hidden; }
+  .area-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--brand),#0891b2); }
+  .area-val { font:700 12.5px 'JetBrains Mono',monospace; min-width:66px; text-align:right; }
+  @media(max-width:760px){ .batch-meta{width:100%;margin-left:0}.area-row{grid-template-columns:115px 1fr auto}.batch-toolbar input{min-width:160px} }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="top-left">
+      <p class="eyebrow">Region VII · Validation Program</p>
+      <h1>Daily Progress Dashboard</h1>
+      <p>Bohol, Cebu Province & Independent Cities · Cumulative period Sept 13–28, 2026</p>
+      <p>By King Vinzhynt Oliver Z. Lim</p>
+    </div>
+    <div class="date-chip">📅 September 28, 2026 · data through Sept 28</div>
+  </div>
+
+<div class="tabnav">
+  <button class="active" data-tab="overview">📊 Overview</button>
+  <button data-tab="lgu">🏘️ LGU Performance</button>
+  <button data-tab="validator">👥 Validator Performance</button>
+  <button data-tab="batch">📉 Previous Variance</button>
+</div>
+
+<!-- ===================== OVERVIEW ===================== -->
+<div class="tab-panel active" id="tab-overview">
+
+  <!-- COMPLETION RATE HERO -->
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-label">Overall Completion Rate</div>
+        <div class="hero-num">18.7<span class="pct">%</span></div>
+        <div class="hero-sub"><b>8,984</b> of <b>48,082</b> target beneficiaries processed</div>
+      </div>
+      <div class="hero-badges">
+        <span class="badge badge-elig">● Eligible 6,807</span>
+        <span class="badge badge-inelig">● Ineligible 2,011</span>
+        <span class="badge badge-defer">● Deferred 164</span>
+        <span class="badge badge-dec">● Deceased 0</span>
+      </div>
+    </div>
+    <div class="hero-bar-wrap">
+      <div class="hero-bar"><div class="hero-bar-fill" style="width:18.7%"></div></div>
+      <div class="hero-marker" style="left:18.7%"></div>
+    </div>
+    <div class="hero-scale"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+    <div class="hero-legend">
+      <div class="hero-legend-item"><span class="sw" style="background:var(--brand)"></span> Processed <span class="val">18.7%</span></div>
+      <div class="hero-legend-item"><span class="sw" style="background:var(--good)"></span> Eligible share <span class="val">75.8% of processed</span></div>
+      <div class="hero-legend-item"><span class="sw" style="background:var(--bad)"></span> Ineligible share <span class="val">22.4% of processed</span></div>
+      <div class="hero-legend-item"><span class="sw" style="background:var(--warn)"></span> Deferred share <span class="val">1.8% of processed</span></div>
+      <div class="hero-legend-item"><span class="sw" style="background:var(--muted)"></span> Remaining <span class="val">81.3%</span></div>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Overall Target</div><div class="kpi-value">48,082</div><div class="kpi-sub neutral">Total beneficiaries</div></div>
+    <div class="kpi"><div class="kpi-label">Total Processed</div><div class="kpi-value">8,984</div><div class="kpi-sub up">▲ +776 vs Sept 26 <span style="font-weight:500;opacity:.8">· 18.7% vs 17.1%</span></div></div>
+    <div class="kpi"><div class="kpi-label">Latest Day (Sept 28)</div><div class="kpi-value">47</div><div class="kpi-sub neutral">Sept 27: 3 · Sept 26: 420</div></div>
+    <div class="kpi"><div class="kpi-label">Workforce</div><div class="kpi-value">39</div><div class="kpi-sub up">55.5 validations / active validator-day</div></div></div>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">LGUs Reporting</div><div class="kpi-value">68 / 101</div><div class="kpi-sub neutral">33 LGUs not started</div></div>
+    <div class="kpi"><div class="kpi-label">Recent Daily Pace</div><div class="kpi-value">1,733</div><div class="kpi-sub neutral">avg Sept 24–28 per day</div></div>
+    <div class="kpi"><div class="kpi-label">Projected Days Left</div><div class="kpi-value">23</div><div class="kpi-sub neutral">reporting days at that pace</div></div>
+    <div class="kpi"><div class="kpi-label">Validators</div><div class="kpi-value">39</div><div class="kpi-sub up">24 active Sept 25 · 55.5/validator-day</div></div></div>
+
+  <!-- RECOMMENDATION & STATUS BREAKDOWN -->
+  <div class="split-grid">
+    <div class="split-card">
+      <h4>🧾 Recommendation Breakdown</h4>
+      <div class="split-row">
+        <span class="split-label">Eligible</span>
+        <div class="split-track"><div class="split-fill" style="width:75.8%;background:var(--good)"></div></div>
+        <span class="split-val" style="color:var(--good)">6,807</span>
+      </div>
+      <div class="split-row">
+        <span class="split-label">Ineligible</span>
+        <div class="split-track"><div class="split-fill" style="width:22.4%;background:var(--bad)"></div></div>
+        <span class="split-val" style="color:var(--bad)">2,011</span>
+      </div>
+      <div class="split-row">
+        <span class="split-label">Deferred</span>
+        <div class="split-track"><div class="split-fill" style="width:1.8%;background:var(--warn)"></div></div>
+        <span class="split-val" style="color:var(--warn)">164</span>
+      </div>
+      <div class="split-row">
+        <span class="split-label">Deceased</span>
+        <div class="split-track"><div class="split-fill" style="width:0%;background:var(--muted)"></div></div>
+        <span class="split-val" style="color:var(--muted)">0</span>
+      </div>
+      <div class="split-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:10px;">
+        <span class="split-label" style="font-weight:800">Total</span>
+        <div class="split-track" style="opacity:.4"></div>
+        <span class="split-val" style="font-weight:800">8,982</span>
+      </div>
+    </div>
+    <div class="split-card">
+      <h4>📋 Other Status Breakdown</h4>
+      <div class="split-row">
+        <span class="split-label">Active</span>
+        <div class="split-track"><div class="split-fill" style="width:91.1%;background:var(--good)"></div></div>
+        <span class="split-val" style="color:var(--good)">657</span>
+      </div>
+      <div class="split-row">
+        <span class="split-label">Unlocated</span>
+        <div class="split-track"><div class="split-fill" style="width:6.0%;background:var(--warn)"></div></div>
+        <span class="split-val" style="color:var(--warn)">43</span>
+      </div>
+      <div class="split-row">
+        <span class="split-label">Unknown</span>
+        <div class="split-track"><div class="split-fill" style="width:2.1%;background:var(--muted)"></div></div>
+        <span class="split-val" style="color:var(--muted)">15</span>
+      </div>
+      <div class="split-row">
+        <span class="split-label">Duplicate</span>
+        <div class="split-track"><div class="split-fill" style="width:0.4%;background:var(--bad)"></div></div>
+        <span class="split-val" style="color:var(--bad)">3</span>
+      </div>
+      <div class="split-row">
+        <span class="split-label">Transfer</span>
+        <div class="split-track"><div class="split-fill" style="width:0.4%;background:var(--brand-2)"></div></div>
+        <span class="split-val" style="color:var(--brand-2)">3</span>
+      </div>
+      <div class="split-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:10px;">
+        <span class="split-label" style="font-weight:800">Total</span>
+        <div class="split-track" style="opacity:.4"></div>
+        <span class="split-val" style="font-weight:800">721</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:16px 20px;margin-bottom:28px"><div class="tools" style="margin:0"><strong style="font-size:13px">🎯 Pace check</strong><span style="font-size:13px;color:var(--ink-soft)">If the remaining <b class="mono">39,098</b> must be done in</span><input id="wd" type="number" min="1" value="20" style="width:80px"><span style="font-size:13px;color:var(--ink-soft)">reporting days → need <b class="mono" id="need">–</b> / day (<b class="mono" id="pv">–</b> per validator, using 24 active) vs <b class="mono">1,733</b> now.</span></div></div>
+
+  <p class="section-title">🚀 Growth Rate — Sept 28 vs Sept 26 &amp; vs Usual</p>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-label">Completion Growth</div><div class="kpi-value">+9.4%</div><div class="kpi-sub up">17.1% → 18.7% cumulative</div></div>
+    <div class="kpi"><div class="kpi-label">Sept 28 vs Usual Daily</div><div class="kpi-value">−90.9%</div><div class="kpi-sub down">47 vs 517 avg/day (12 prior days)</div></div>
+    <div class="kpi"><div class="kpi-label">Sept 26 vs Sept 25</div><div class="kpi-value">−74.8%</div><div class="kpi-sub down">420 vs 1,665</div></div>
+    <div class="kpi"><div class="kpi-label">Completion Gain (Sept 26–28)</div><div class="kpi-value">+0.98 pts</div><div class="kpi-sub up">39,098 still to go</div></div>
+  </div>
+
+  <div class="card"><div class="table-scroll"><table style="min-width:860px"><thead><tr><th>Area</th><th>Target</th><th>Processed</th><th>Completion</th><th>Eligible</th><th>Ineligible</th><th>Deferred</th><th>Active</th><th>Unlocated</th></tr></thead><tbody>
+  <tr><td class="loc">Bohol</td><td class="mono">16,864</td><td class="mono">3,236</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:19.2%"></div></div><span class="mono">19.2%</span></div></td><td class="mono">2,205</td><td class="mono">827</td><td class="mono">57</td><td class="mono">432</td><td class="mono">5</td></tr>
+  <tr><td class="loc">Cebu Province</td><td class="mono">23,173</td><td class="mono">4,741</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:20.5%"></div></div><span class="mono">20.5%</span></div></td><td class="mono">3,602</td><td class="mono">1,002</td><td class="mono">87</td><td class="mono">183</td><td class="mono">38</td></tr>
+  <tr><td class="loc">City of Cebu</td><td class="mono">5,057</td><td class="mono">899</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:17.8%"></div></div><span class="mono">17.8%</span></div></td><td class="mono">680</td><td class="mono">180</td><td class="mono">1</td><td class="mono">37</td><td class="mono">0</td></tr>
+  <tr><td class="loc">City of Lapu-Lapu</td><td class="mono">1,928</td><td class="mono">1</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:0.1%"></div></div><span class="mono">0.1%</span></div></td><td class="mono">0</td><td class="mono">1</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td></tr>
+  <tr><td class="loc">City of Mandaue</td><td class="mono">1,060</td><td class="mono">107</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:10.1%"></div></div><span class="mono">10.1%</span></div></td><td class="mono">44</td><td class="mono">1</td><td class="mono">19</td><td class="mono">5</td><td class="mono">0</td></tr>
+  <tr class="total"><td class="loc">Grand Total</td><td class="mono">48,082</td><td class="mono">8,984</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:18.7%"></div></div><span class="mono">18.7%</span></div></td><td class="mono">6,807</td><td class="mono">2,011</td><td class="mono">164</td><td class="mono">657</td><td class="mono">43</td></tr>
+  </tbody></table></div></div>
+  <p style="font-size:12px;color:var(--muted);margin:-18px 0 28px">Cumulative totals through Sept 28. Eligible / Ineligible / Deferred totals from the Recommendation pivot; Active / Unlocated / Unknown / Duplicate / Transfer from the Other Status pivot. Bohol + Cebu eligible counts are estimates from the per-validator rollup.</p>
+
+  <p class="section-title">📈 Daily Validations by Area</p>
+  <div class="card" style="padding:18px 20px">
+    <svg viewBox="0 0 760 230" width="100%" role="img" aria-label="Daily validations stacked by area">
+      <rect class="c2" x="40" y="186.4" width="52" height="3.6" rx="3"><title>Sep 16 · Cebu Province: 171</title></rect><text x="66" y="180.4" class="lb" text-anchor="middle">171</text><text x="66" y="210" class="ax" text-anchor="middle">Sep 16</text>
+      <rect class="c2" x="115" y="187.3" width="52" height="2.7" rx="3"><title>Sep 17 · Cebu Province: 127</title></rect><text x="141" y="181.3" class="lb" text-anchor="middle">127</text><text x="141" y="210" class="ax" text-anchor="middle">Sep 17</text>
+      <rect class="c2" x="190" y="184.0" width="52" height="6.0" rx="3"><title>Sep 18 · Cebu Province: 157</title></rect><rect class="c1" x="190" y="181.7" width="52" height="2.3" rx="3"><title>Sep 18 · Bohol: 105</title></rect><text x="216" y="175.7" class="lb" text-anchor="middle">262</text><text x="216" y="210" class="ax" text-anchor="middle">Sep 18</text>
+      <rect class="c3" x="265" y="175.3" width="52" height="14.7" rx="3"><title>Sep 21 · City of Cebu: 422</title></rect><rect class="c2" x="265" y="167.1" width="52" height="8.2" rx="3"><title>Sep 21 · Cebu Province: 236</title></rect><rect class="c1" x="265" y="158.3" width="52" height="8.8" rx="3"><title>Sep 21 · Bohol: 348</title></rect><text x="291" y="152.3" class="lb" text-anchor="middle">1,006</text><text x="291" y="210" class="ax" text-anchor="middle">Sep 21</text>
+      <rect class="c3" x="340" y="188.0" width="52" height="2.0" rx="3"><title>Sep 22 · City of Cebu: 76</title></rect><rect class="c2" x="340" y="159.2" width="52" height="28.8" rx="3"><title>Sep 22 · Cebu Province: 872</title></rect><rect class="c1" x="340" y="149.2" width="52" height="10.0" rx="3"><title>Sep 22 · Bohol: 423</title></rect><text x="366" y="143.2" class="lb" text-anchor="middle">1,371</text><text x="366" y="210" class="ax" text-anchor="middle">Sep 22</text>
+      <rect class="c3" x="415" y="187.7" width="52" height="2.3" rx="3"><title>Sep 23 · City of Cebu: 80</title></rect><rect class="c2" x="415" y="157.6" width="52" height="30.1" rx="3"><title>Sep 23 · Cebu Province: 903</title></rect><rect class="c1" x="415" y="139.0" width="52" height="18.6" rx="3"><title>Sep 23 · Bohol: 613</title></rect><text x="441" y="133.0" class="lb" text-anchor="middle">1,596</text><text x="441" y="210" class="ax" text-anchor="middle">Sep 23</text>
+      <rect class="c3" x="490" y="186.8" width="52" height="3.2" rx="3"><title>Sep 24 · City of Cebu: 90</title></rect><rect class="c2" x="490" y="136.0" width="52" height="50.8" rx="3"><title>Sep 24 · Cebu Province: 1,403</title></rect><rect class="c1" x="490" y="106.3" width="52" height="29.7" rx="3"><title>Sep 24 · Bohol: 821</title></rect><text x="516" y="100.3" class="lb" text-anchor="middle">2,315</text><text x="516" y="210" class="ax" text-anchor="middle">Sep 24</text>
+      <rect class="c3" x="565" y="184.8" width="52" height="5.2" rx="3"><title>Sep 25 · City of Cebu: 188</title></rect><rect class="c2" x="565" y="148.6" width="52" height="36.2" rx="3"><title>Sep 25 · Cebu Province: 717</title></rect><rect class="c1" x="565" y="121.9" width="52" height="26.7" rx="3"><title>Sep 25 · Bohol: 821</title></rect><text x="591" y="115.9" class="lb" text-anchor="middle">1,665</text><text x="591" y="210" class="ax" text-anchor="middle">Sep 25</text>
+      <rect class="c3" x="640" y="185.5" width="52" height="4.5" rx="3"><title>Sep 26 · City of Cebu: 43</title></rect><rect class="c2" x="640" y="169.8" width="52" height="15.7" rx="3"><title>Sep 26 · Cebu Province: 151</title></rect><rect class="c1" x="640" y="163.0" width="52" height="6.8" rx="3"><title>Sep 26 · Bohol: 226</title></rect><text x="666" y="157.0" class="lb" text-anchor="middle">420</text><text x="666" y="210" class="ax" text-anchor="middle">Sep 26</text>
+    </svg>
+    <div class="legend"><span><i class="c1"></i>Bohol</span><span><i class="c2"></i>Cebu Province</span><span><i class="c3"></i>City of Cebu</span><span style="margin-left:auto">Sept 27: 3 · Sept 28: 47 (partial) · new days will fill in as they close</span></div>
+  </div>
+
+  <p class="section-title">🗺️ Coverage by Province &amp; Achievement Bands</p>
+  <div class="highlights" style="grid-template-columns:2fr 1fr">
+    <div class="card" style="margin:0"><div class="table-scroll"><table style="min-width:640px"><thead><tr><th>Area</th><th>LGUs</th><th>Reporting</th><th>Not Started</th><th>Target</th><th>Accomplished</th><th>Balance</th><th>Rate</th></tr></thead><tbody>
+    <tr><td class="loc">Bohol</td><td class="mono">48</td><td class="mono">30</td><td class="mono down" style="background:none">18</td><td class="mono">16,864</td><td class="mono">3,236</td><td class="mono">13,628</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:19.2%"></div></div><span class="mono">19.2%</span></div></td></tr>
+    <tr><td class="loc">Cebu Province</td><td class="mono">50</td><td class="mono">35</td><td class="mono down" style="background:none">15</td><td class="mono">23,173</td><td class="mono">4,741</td><td class="mono">18,432</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:20.5%"></div></div><span class="mono">20.5%</span></div></td></tr>
+    <tr><td class="loc">City of Cebu</td><td class="mono">1</td><td class="mono">1</td><td class="mono " style="background:none">0</td><td class="mono">5,057</td><td class="mono">899</td><td class="mono">4,158</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:17.8%"></div></div><span class="mono">17.8%</span></div></td></tr>
+    <tr><td class="loc">City of Lapu-Lapu</td><td class="mono">1</td><td class="mono">1</td><td class="mono " style="background:none">0</td><td class="mono">1,928</td><td class="mono">1</td><td class="mono">1,927</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:0.1%"></div></div><span class="mono">0.1%</span></div></td></tr>
+    <tr><td class="loc">City of Mandaue</td><td class="mono">1</td><td class="mono">1</td><td class="mono " style="background:none">0</td><td class="mono">1,060</td><td class="mono">107</td><td class="mono">953</td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:10.1%"></div></div><span class="mono">10.1%</span></div></td></tr>
+    </tbody></table></div></div>
+    <div class="h-card"><h3>📶 LGUs by Accomplishment Rate</h3><ul class="h-list">
+      <li><span class="h-name">Not started</span><span class="h-val">33</span></li>
+      <li><span class="h-name">Under 10%</span><span class="h-val">9</span></li>
+      <li><span class="h-name">10–24.9%</span><span class="h-val">21</span></li>
+      <li><span class="h-name">25–49.9%</span><span class="h-val">28</span></li>
+      <li><span class="h-name">50% and above</span><span class="h-val">10</span></li>
+    </ul></div>
+  </div>
+
+  <div class="highlights">
+    <div class="h-card"><h3>🚀 Top 5 by Volume Delivered — Sept 25</h3><ul class="h-list">
+      <li><span class="h-name"><span class="h-rank">1</span>Ubay <span class="h-sub">Bohol</span></span><span class="h-val">190</span></li>
+      <li><span class="h-name"><span class="h-rank">2</span>City of Cebu <span class="h-sub">City of Cebu</span></span><span class="h-val">188</span></li>
+      <li><span class="h-name"><span class="h-rank">3</span>Sibonga <span class="h-sub">Cebu</span></span><span class="h-val">138</span></li>
+      <li><span class="h-name"><span class="h-rank">4</span>Talibon <span class="h-sub">Bohol</span></span><span class="h-val">121</span></li>
+      <li><span class="h-name"><span class="h-rank">5</span>Barili <span class="h-sub">Cebu</span></span><span class="h-val">111</span></li>
+    </ul></div>
+    <div class="h-card"><h3>🏆 Top 5 by Target Achievement</h3><ul class="h-list">
+      <li><span class="h-name"><span class="h-rank">1</span>Getafe <span class="h-sub">Bohol</span></span><span class="h-val">88.8%</span></li>
+      <li><span class="h-name"><span class="h-rank">2</span>Sikatuna <span class="h-sub">Bohol</span></span><span class="h-val">79.8%</span></li>
+      <li><span class="h-name"><span class="h-rank">3</span>Danao <span class="h-sub">Bohol</span></span><span class="h-val">65.7%</span></li>
+      <li><span class="h-name"><span class="h-rank">4</span>Clarin <span class="h-sub">Bohol</span></span><span class="h-val">61.6%</span></li>
+      <li><span class="h-name"><span class="h-rank">5</span>Catigbian <span class="h-sub">Bohol</span></span><span class="h-val">60.9%</span></li>
+    </ul></div>
+  </div>
+
+  <div class="insights" style="margin-top:22px"><h3>🧭 Recommended Strategy</h3>
+    <div class="insight-item"><div class="insight-icon ic-warn">⚖️</div><div class="insight-text"><strong>Sept 30 for the full target is not reachable.</strong> It needs about 9,775 validations a day, well above the best day so far (2,315). The best case reaches about 40% by Sept 30. Recommend the Central Office a realistic Sept 30 milestone of about 40%, and full completion by Oct 15.</div></div>
+    <div class="insight-item"><div class="insight-icon ic-up">🎯</div><div class="insight-text"><strong>Oct 15 is within reach with weekends plus the step-up.</strong> On weekdays it needs about 2,607/day. Working 7 days a week lowers the need to about 1,862/day, and the gap plan with weekends finishes around Oct 14.</div></div>
+    <div class="insight-item"><div class="insight-icon ic-up">👥</div><div class="insight-text"><strong>Capacity levers:</strong> reactivate the 15 validators idle on Sept 25 (+280/day at median pace) and lift the active validators below the median of 45 (+212/day). Together daily capacity moves from 1,665 toward about 2,156–2,262.</div></div>
+    <div class="insight-item"><div class="insight-icon ic-warn">🗺️</div><div class="insight-text"><strong>Redeploy toward the biggest balances.</strong> The 10 largest LGU balances hold about 35% of the remaining target; the 33 not-yet-started LGUs hold a large share, including City of Talisay (1,277), City of Mandaue (953 remaining) and Tubigon (976). Assign dedicated validator teams to those first.</div></div>
+    <div class="insight-item"><div class="insight-icon ic-warn">🚨</div><div class="insight-text"><strong>Daily control:</strong> give each LGU a daily quota (balance ÷ working days) and review every morning. Sept 26 output dropped 74.8% from Sept 25 — daily follow-up is essential. Encode the same day: past days keep being revised upward, which hides the true pace.</div></div>
+    <div class="insight-item"><div class="insight-icon ic-up">🧾</div><div class="insight-text"><strong>Quality is holding:</strong> 75.8% of processed records are Eligible, 22.4% Ineligible, 1.8% Deferred, and 0% Deceased. Among the 721 records with an "other status," 91.1% are Active, 6.0% Unlocated, 2.1% Unknown, and less than 1% Duplicate or Transfer.</div></div>
+  </div>
+</div>
+
+<!-- ===================== LGU ===================== -->
+<div class="tab-panel" id="tab-lgu">
+  <p class="section-title">🏘️ LGU Accomplishment — Disaggregated (101 LGUs)</p>
+  <div class="card">
+    <div class="tools" style="padding:14px 16px 0">
+      <input id="q" placeholder="Search LGU…" style="min-width:180px">
+      <button class="chip on" data-f="">All</button>
+      <button class="chip" data-f="Bohol">Bohol</button>
+      <button class="chip" data-f="Cebu Province">Cebu Province</button>
+      <button class="chip" data-f="City of Cebu">City of Cebu</button>
+      <button class="chip" data-f="City of Lapu-Lapu">City of Lapu-Lapu</button>
+      <button class="chip" data-f="City of Mandaue">City of Mandaue</button>
+      <span class="h-sub" id="cnt"></span>
+    </div>
+    <div class="table-scroll" style="max-height:640px;overflow:auto">
+      <table class="st sortable" id="lt" style="min-width:1600px">
+        <thead><tr>
+          <th>LGU</th><th>Area</th><th>Target</th><th>Accomplished</th><th>Rate %</th>
+          <th>Eligible</th><th>Ineligible</th><th>Deferred</th><th>Active</th><th>Unlocated</th>
+          <th>Sep 13</th><th>Sep 16</th><th>Sep 17</th><th>Sep 18</th><th>Sep 21</th><th>Sep 22</th><th>Sep 23</th><th>Sep 24</th><th>Sep 25</th><th>Sep 26</th><th>Sep 27</th><th>Sep 28</th><th>Status</th>
+        </tr></thead>
+        <tbody>
+          <tr data-p="Bohol"><td class="loc">Sikatuna</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">94</td><td class="mono"><b>75</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:79.8%"></div></div><span class="mono">79.8%</span></div></td><td class="mono">23</td><td class="mono">52</td><td class="mono">0</td><td class="mono">22</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">75</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Danao</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">245</td><td class="mono"><b>161</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:65.7%"></div></div><span class="mono">65.7%</span></div></td><td class="mono">138</td><td class="mono">23</td><td class="mono">0</td><td class="mono">19</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">77</td><td class="mono dc">84</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Clarin</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">255</td><td class="mono"><b>157</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:61.6%"></div></div><span class="mono">61.6%</span></div></td><td class="mono">99</td><td class="mono">57</td><td class="mono">1</td><td class="mono">28</td><td class="mono">2</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">48</td><td class="mono dc">109</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Catigbian</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">271</td><td class="mono"><b>165</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:60.9%"></div></div><span class="mono">60.9%</span></div></td><td class="mono">58</td><td class="mono">107</td><td class="mono">0</td><td class="mono">101</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">85</td><td class="mono dc">80</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">San Isidro</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">125</td><td class="mono"><b>68</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:54.4%"></div></div><span class="mono">54.4%</span></div></td><td class="mono">49</td><td class="mono">19</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">68</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Poro</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">207</td><td class="mono"><b>110</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:53.1%"></div></div><span class="mono">53.1%</span></div></td><td class="mono">56</td><td class="mono">55</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">22</td><td class="mono dc">2</td><td class="mono dc">51</td><td class="mono dc">10</td><td class="mono dc">25</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Getafe</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">240</td><td class="mono"><b>213</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:88.8%"></div></div><span class="mono">88.8%</span></div></td><td class="mono">117</td><td class="mono">95</td><td class="mono">1</td><td class="mono">57</td><td class="mono">2</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">107</td><td class="mono dc">82</td><td class="mono dc">24</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Ubay</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">1,073</td><td class="mono"><b>602</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:56.1%"></div></div><span class="mono">56.1%</span></div></td><td class="mono">588</td><td class="mono">12</td><td class="mono">2</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">107</td><td class="mono dc">144</td><td class="mono dc">115</td><td class="mono dc">46</td><td class="mono dc">190</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">San Francisco</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">401</td><td class="mono"><b>221</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:55.1%"></div></div><span class="mono">55.1%</span></div></td><td class="mono">118</td><td class="mono">102</td><td class="mono">1</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">110</td><td class="mono dc">55</td><td class="mono dc">56</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Barili</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">954</td><td class="mono"><b>466</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:48.8%"></div></div><span class="mono">48.8%</span></div></td><td class="mono">121</td><td class="mono">3</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">355</td><td class="mono dc">111</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Talibon</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">836</td><td class="mono"><b>361</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:43.2%"></div></div><span class="mono">43.2%</span></div></td><td class="mono">313</td><td class="mono">48</td><td class="mono">0</td><td class="mono">42</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">115</td><td class="mono dc">121</td><td class="mono dc">125</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Guindulman</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">434</td><td class="mono"><b>178</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:41.0%"></div></div><span class="mono">41.0%</span></div></td><td class="mono">157</td><td class="mono">20</td><td class="mono">1</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">46</td><td class="mono dc">34</td><td class="mono dc">56</td><td class="mono dc">42</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Sibonga</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">613</td><td class="mono"><b>369</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:60.2%"></div></div><span class="mono">60.2%</span></div></td><td class="mono">302</td><td class="mono">59</td><td class="mono">8</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">101</td><td class="mono dc">62</td><td class="mono dc">138</td><td class="mono dc">68</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Argao</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">737</td><td class="mono"><b>146</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:19.8%"></div></div><span class="mono">19.8%</span></div></td><td class="mono">112</td><td class="mono">15</td><td class="mono">19</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">55</td><td class="mono dc">72</td><td class="mono dc">16</td><td class="mono dc">3</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Carmen</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">543</td><td class="mono"><b>103</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:19.0%"></div></div><span class="mono">19.0%</span></div></td><td class="mono">100</td><td class="mono">3</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">103</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Dalaguete</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">405</td><td class="mono"><b>225</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:55.6%"></div></div><span class="mono">55.6%</span></div></td><td class="mono">71</td><td class="mono">101</td><td class="mono">0</td><td class="mono">44</td><td class="mono">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">1</td><td class="mono dc">138</td><td class="mono dc">27</td><td class="mono dc">59</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Liloan</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">867</td><td class="mono"><b>115</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:13.3%"></div></div><span class="mono">13.3%</span></div></td><td class="mono">111</td><td class="mono">4</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">49</td><td class="mono dc">66</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Daanbantayan</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">739</td><td class="mono"><b>296</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:40.0%"></div></div><span class="mono">40.0%</span></div></td><td class="mono">108</td><td class="mono">30</td><td class="mono">8</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">136</td><td class="mono dc">129</td><td class="mono dc">24</td><td class="mono dc">7</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Inabanga</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">484</td><td class="mono"><b>119</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:24.6%"></div></div><span class="mono">24.6%</span></div></td><td class="mono">88</td><td class="mono">27</td><td class="mono">4</td><td class="mono">23</td><td class="mono">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">49</td><td class="mono dc">68</td><td class="mono dc">2</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">City of Toledo</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">1,381</td><td class="mono"><b>254</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:18.4%"></div></div><span class="mono">18.4%</span></div></td><td class="mono">127</td><td class="mono">54</td><td class="mono">7</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">110</td><td class="mono dc">–</td><td class="mono dc">143</td><td class="mono dc">–</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="City of Cebu"><td class="loc">City of Cebu</td><td><span class="h-sub" style="margin:0">City of Cebu</span></td><td class="mono">5,057</td><td class="mono"><b>899</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:17.8%"></div></div><span class="mono">17.8%</span></div></td><td class="mono">680</td><td class="mono">180</td><td class="mono">1</td><td class="mono">37</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">422</td><td class="mono dc">76</td><td class="mono dc">80</td><td class="mono dc">90</td><td class="mono dc">188</td><td class="mono dc">43</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="City of Mandaue"><td class="loc">City of Mandaue</td><td><span class="h-sub" style="margin:0">City of Mandaue</span></td><td class="mono">1,060</td><td class="mono"><b>107</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:10.1%"></div></div><span class="mono">10.1%</span></div></td><td class="mono">44</td><td class="mono">1</td><td class="mono">19</td><td class="mono">5</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">107</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Compostela</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">418</td><td class="mono"><b>190</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:45.5%"></div></div><span class="mono">45.5%</span></div></td><td class="mono">158</td><td class="mono">32</td><td class="mono">0</td><td class="mono">12</td><td class="mono">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">118</td><td class="mono dc">–</td><td class="mono dc">66</td><td class="mono dc">6</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Madridejos</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">303</td><td class="mono"><b>134</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:44.2%"></div></div><span class="mono">44.2%</span></div></td><td class="mono">106</td><td class="mono">10</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">90</td><td class="mono dc">37</td><td class="mono dc">7</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Aloguinsan</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">435</td><td class="mono"><b>188</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:43.2%"></div></div><span class="mono">43.2%</span></div></td><td class="mono">179</td><td class="mono">9</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">95</td><td class="mono dc">93</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Bantayan</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">522</td><td class="mono"><b>188</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:36.0%"></div></div><span class="mono">36.0%</span></div></td><td class="mono">71</td><td class="mono">6</td><td class="mono">5</td><td class="mono">2</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">38</td><td class="mono dc">81</td><td class="mono dc">69</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Dagohoy</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">237</td><td class="mono"><b>84</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:35.4%"></div></div><span class="mono">35.4%</span></div></td><td class="mono">80</td><td class="mono">4</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">44</td><td class="mono dc">40</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Medellin</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">295</td><td class="mono"><b>104</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:35.3%"></div></div><span class="mono">35.3%</span></div></td><td class="mono">4</td><td class="mono">10</td><td class="mono">0</td><td class="mono">13</td><td class="mono">21</td><td class="mono dc">–</td><td class="mono dc">37</td><td class="mono dc">–</td><td class="mono dc">14</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">51</td><td class="mono dc">2</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Carmen</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">371</td><td class="mono"><b>127</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:34.2%"></div></div><span class="mono">34.2%</span></div></td><td class="mono">70</td><td class="mono">26</td><td class="mono">1</td><td class="mono">9</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">45</td><td class="mono dc">–</td><td class="mono dc">82</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Bien Unido</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">179</td><td class="mono"><b>61</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:34.1%"></div></div><span class="mono">34.1%</span></div></td><td class="mono">58</td><td class="mono">3</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">35</td><td class="mono dc">25</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Garcia Hernandez</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">280</td><td class="mono"><b>93</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:33.2%"></div></div><span class="mono">33.2%</span></div></td><td class="mono">86</td><td class="mono">6</td><td class="mono">1</td><td class="mono">2</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">93</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Loay</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">201</td><td class="mono"><b>65</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:32.3%"></div></div><span class="mono">32.3%</span></div></td><td class="mono">65</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">65</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Sogod</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">284</td><td class="mono"><b>82</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:28.9%"></div></div><span class="mono">28.9%</span></div></td><td class="mono">29</td><td class="mono">3</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">50</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">32</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Jagna</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">374</td><td class="mono"><b>123</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:32.9%"></div></div><span class="mono">32.9%</span></div></td><td class="mono">70</td><td class="mono">51</td><td class="mono">2</td><td class="mono">47</td><td class="mono">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">65</td><td class="mono dc">58</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Cordova</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">279</td><td class="mono"><b>48</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:17.2%"></div></div><span class="mono">17.2%</span></div></td><td class="mono">22</td><td class="mono">2</td><td class="mono">6</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">48</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Consolacion</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">653</td><td class="mono"><b>103</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:15.8%"></div></div><span class="mono">15.8%</span></div></td><td class="mono">29</td><td class="mono">46</td><td class="mono">2</td><td class="mono">7</td><td class="mono">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">103</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Danao City</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">797</td><td class="mono"><b>135</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:16.9%"></div></div><span class="mono">16.9%</span></div></td><td class="mono">68</td><td class="mono">25</td><td class="mono">2</td><td class="mono">3</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">135</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Antequera</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">474</td><td class="mono"><b>56</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:11.8%"></div></div><span class="mono">11.8%</span></div></td><td class="mono">53</td><td class="mono">3</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">56</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Samboan</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">230</td><td class="mono"><b>27</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:11.7%"></div></div><span class="mono">11.7%</span></div></td><td class="mono">26</td><td class="mono">1</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">25</td><td class="mono dc">2</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Bilar</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">250</td><td class="mono"><b>60</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:24.0%"></div></div><span class="mono">24.0%</span></div></td><td class="mono">57</td><td class="mono">3</td><td class="mono">0</td><td class="mono">1</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">60</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Asturias</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">355</td><td class="mono"><b>98</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:27.6%"></div></div><span class="mono">27.6%</span></div></td><td class="mono">65</td><td class="mono">33</td><td class="mono">0</td><td class="mono">30</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">46</td><td class="mono dc">1</td><td class="mono dc">11</td><td class="mono dc">40</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Alburquerque</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">124</td><td class="mono"><b>26</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:21.0%"></div></div><span class="mono">21.0%</span></div></td><td class="mono">21</td><td class="mono">0</td><td class="mono">5</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">26</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">San Remigio</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">544</td><td class="mono"><b>121</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:22.2%"></div></div><span class="mono">22.2%</span></div></td><td class="mono">20</td><td class="mono">3</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">23</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">72</td><td class="mono dc">26</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Trinidad</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">722</td><td class="mono"><b>9</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:1.2%"></div></div><span class="mono">1.2%</span></div></td><td class="mono">0</td><td class="mono">9</td><td class="mono">0</td><td class="mono">9</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">7</td><td class="mono dc">2</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Buenavista</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">251</td><td class="mono"><b>5</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:2.0%"></div></div><span class="mono">2.0%</span></div></td><td class="mono">4</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">1</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">3</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Sagbayan</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">614</td><td class="mono"><b>57</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:9.3%"></div></div><span class="mono">9.3%</span></div></td><td class="mono">4</td><td class="mono">0</td><td class="mono">0</td><td class="mono">4</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">1</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">1</td><td class="mono dc">1</td><td class="mono dc">4</td><td class="mono dc">3</td><td class="mono dc">46</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Loboc</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">180</td><td class="mono"><b>31</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:17.2%"></div></div><span class="mono">17.2%</span></div></td><td class="mono">0</td><td class="mono">30</td><td class="mono">1</td><td class="mono">30</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">30</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Pilar</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">293</td><td class="mono"><b>109</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:37.2%"></div></div><span class="mono">37.2%</span></div></td><td class="mono">76</td><td class="mono">24</td><td class="mono">9</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">87</td><td class="mono dc">22</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">San Miguel</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">373</td><td class="mono"><b>94</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:25.2%"></div></div><span class="mono">25.2%</span></div></td><td class="mono">78</td><td class="mono">16</td><td class="mono">0</td><td class="mono">16</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">94</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Bohol"><td class="loc">Sierra Bullones</td><td><span class="h-sub" style="margin:0">Bohol</span></td><td class="mono">232</td><td class="mono"><b>58</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:25.0%"></div></div><span class="mono">25.0%</span></div></td><td class="mono">48</td><td class="mono">2</td><td class="mono">8</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">10</td><td class="mono dc">47</td><td class="mono dc">1</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-hi">On Track ≥25%</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Tabogon</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">425</td><td class="mono"><b>98</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:23.1%"></div></div><span class="mono">23.1%</span></div></td><td class="mono">86</td><td class="mono">12</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">98</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-live">In Progress</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">Ronda</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">226</td><td class="mono"><b>0</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:0.0%"></div></div><span class="mono">0.0%</span></div></td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-wait">Not Started</span></td></tr>
+          <tr data-p="Cebu Province"><td class="loc">City of Talisay</td><td><span class="h-sub" style="margin:0">Cebu Province</span></td><td class="mono">1,277</td><td class="mono"><b>0</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:0.0%"></div></div><span class="mono">0.0%</span></div></td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-wait">Not Started</span></td></tr>
+          <tr data-p="City of Lapu-Lapu"><td class="loc">City of Lapu-Lapu</td><td><span class="h-sub" style="margin:0">City of Lapu-Lapu</span></td><td class="mono">1,928</td><td class="mono"><b>1</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:0.1%"></div></div><span class="mono">0.1%</span></div></td><td class="mono">0</td><td class="mono">1</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td><span class="badge badge-wait">Barely Started</span></td></tr>
+        </tbody>
+        <tfoot><tr class="total">
+          <td class="loc">Total</td><td></td><td class="mono">48,082</td><td class="mono">8,984</td>
+          <td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:18.7%"></div></div><span class="mono">18.7%</span></div></td>
+          <td class="mono">6,807</td><td class="mono">2,011</td><td class="mono">164</td><td class="mono">657</td><td class="mono">43</td>
+          <td class="mono dc">1</td><td class="mono dc">171</td><td class="mono dc">127</td><td class="mono dc">262</td><td class="mono dc">1,006</td><td class="mono dc">1,371</td><td class="mono dc">1,596</td><td class="mono dc">2,315</td><td class="mono dc">1,665</td><td class="mono dc">420</td><td class="mono dc">3</td><td class="mono dc">47</td><td></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin:-18px 0 28px">Click any column heading to sort. Daily columns are validations logged that day. Eligible / Ineligible / Deferred come from the recommendation pivot; Active / Unlocated from the other-status pivot. Rate = accomplished ÷ target.</p>
+
+  <div class="highlights">
+    <div class="h-card"><h3>🚧 Biggest Untouched Targets (0 accomplished)</h3><ul class="h-list">
+      <li><span class="h-name"><span class="h-rank">1</span>City of Talisay<span class="h-sub">Cebu Province</span></span><span class="h-val">1,277</span></li>
+      <li><span class="h-name"><span class="h-rank">2</span>Tubigon<span class="h-sub">Bohol</span></span><span class="h-val">976</span></li>
+      <li><span class="h-name"><span class="h-rank">3</span>City of Tagbilaran<span class="h-sub">Bohol</span></span><span class="h-val">939</span></li>
+      <li><span class="h-name"><span class="h-rank">4</span>City of Carcar<span class="h-sub">Cebu Province</span></span><span class="h-val">860</span></li>
+      <li><span class="h-name"><span class="h-rank">5</span>Balamban<span class="h-sub">Cebu Province</span></span><span class="h-val">739</span></li>
+      <li><span class="h-name"><span class="h-rank">6</span>Minglanilla<span class="h-sub">Cebu Province</span></span><span class="h-val">686</span></li>
+      <li><span class="h-name"><span class="h-rank">7</span>Tuburan<span class="h-sub">Cebu Province</span></span><span class="h-val">684</span></li>
+      <li><span class="h-name"><span class="h-rank">8</span>Loon<span class="h-sub">Bohol</span></span><span class="h-val">678</span></li>
+      <li><span class="h-name"><span class="h-rank">9</span>Borbon<span class="h-sub">Cebu Province</span></span><span class="h-val">617</span></li>
+      <li><span class="h-name"><span class="h-rank">10</span>Calape<span class="h-sub">Bohol</span></span><span class="h-val">368</span></li>
+    </ul></div>
+    <div class="h-card"><h3>🐢 Lowest Rate Among Started LGUs (target ≥300)</h3><ul class="h-list">
+      <li><span class="h-name"><span class="h-rank">1</span>Candijay<span class="h-sub">1/427</span></span><span class="h-val">0.2%</span></li>
+      <li><span class="h-name"><span class="h-rank">2</span>Trinidad<span class="h-sub">9/722</span></span><span class="h-val">1.2%</span></li>
+      <li><span class="h-name"><span class="h-rank">3</span>Buenavista<span class="h-sub">5/251</span></span><span class="h-val">2.0%</span></li>
+      <li><span class="h-name"><span class="h-rank">4</span>Sagbayan<span class="h-sub">57/614</span></span><span class="h-val">9.3%</span></li>
+      <li><span class="h-name"><span class="h-rank">5</span>City of Mandaue<span class="h-sub">107/1,060</span></span><span class="h-val">10.1%</span></li>
+    </ul></div>
+  </div>
+</div>
+
+<!-- ===================== VALIDATOR ===================== -->
+<div class="tab-panel" id="tab-validator">
+  <p class="section-title">👥 Validator Performance — Updated through Sept 28, 2026 (39 validators)</p>
+  <div class="kpi-grid" style="margin-bottom:14px">
+    <div class="kpi"><div class="kpi-label">Top Validator</div><div class="kpi-value" style="font-size:20px">647</div><div class="kpi-sub neutral">Gil Augdito Maraguinot</div></div>
+    <div class="kpi"><div class="kpi-label">Avg per Validator</div><div class="kpi-value">230.4</div><div class="kpi-sub neutral">total to date (8,984 ÷ 39)</div></div>
+    <div class="kpi"><div class="kpi-label">Avg per Validator-Day</div><div class="kpi-value">55.5</div><div class="kpi-sub neutral">over 162 active validator-days</div></div>
+    <div class="kpi"><div class="kpi-label">Top 3 Share</div><div class="kpi-value">19.1%</div><div class="kpi-sub neutral">of all 8,984 validations</div></div>
+  </div>
+  <div class="kpi-grid" style="margin-bottom:14px">
+    <div class="kpi"><div class="kpi-label">Active Sept 25</div><div class="kpi-value">24</div><div class="kpi-sub up">validators with output</div></div>
+    <div class="kpi"><div class="kpi-label">Idle Sept 25</div><div class="kpi-value">15</div><div class="kpi-sub down">no output that day</div></div>
+    <div class="kpi"><div class="kpi-label">Sept 25 Volume</div><div class="kpi-value">1,665</div><div class="kpi-sub neutral">across all validators</div></div>
+    <div class="kpi"><div class="kpi-label">Top Daily Output</div><div class="kpi-value">190</div><div class="kpi-sub up">Ethel Boyles Acuram · Sept 25</div></div>
+  </div>
+  <div class="highlights" style="margin-bottom:14px">
+    <div class="h-card"><h3>📈 Biggest Gains (Sept 24 → Sept 25)</h3><ul class="h-list">
+      <li><span class="h-name"><span class="h-rank">1</span>Ethel Boyles Acuram<span class="h-sub">46 → 190</span></span><span class="h-val up">+144</span></li>
+      <li><span class="h-name"><span class="h-rank">2</span>King Vinzhynt Oliver Zapatalo Lim<span class="h-sub">1 → 72</span></span><span class="h-val up">+71</span></li>
+      <li><span class="h-name"><span class="h-rank">3</span>Ramarlito Elorde Lagang<span class="h-sub">11 → 77</span></span><span class="h-val up">+66</span></li>
+      <li><span class="h-name"><span class="h-rank">4</span>Louvelyn Serino Ochea<span class="h-sub">11 → 40</span></span><span class="h-val up">+29</span></li>
+      <li><span class="h-name"><span class="h-rank">5</span>Charlene Oted Sevillita<span class="h-sub">19 → 46</span></span><span class="h-val up">+27</span></li>
+    </ul></div>
+    <div class="h-card"><h3>📉 Biggest Drops (Sept 24 → Sept 25)</h3><ul class="h-list">
+      <li><span class="h-name"><span class="h-rank">1</span>Adrian Baron Colao<span class="h-sub">138 → 0</span></span><span class="h-val down">−138</span></li>
+      <li><span class="h-name"><span class="h-rank">2</span>Edilberto Laranjo Ejercito<span class="h-sub">103 → 0</span></span><span class="h-val down">−103</span></li>
+      <li><span class="h-name"><span class="h-rank">3</span>Jaryl Latonio Dejito<span class="h-sub">145 → 46</span></span><span class="h-val down">−99</span></li>
+      <li><span class="h-name"><span class="h-rank">4</span>Joven Jimenez Calma<span class="h-sub">95 → 0</span></span><span class="h-val down">−95</span></li>
+      <li><span class="h-name"><span class="h-rank">5</span>Jhon Renz Buay Torres<span class="h-sub">94 → 0</span></span><span class="h-val down">−94</span></li>
+    </ul></div>
+  </div>
+  <div class="card"><div class="table-scroll" style="max-height:640px;overflow:auto">
+    <table class="st sortable" style="min-width:1700px"><thead><tr>
+      <th>#</th><th>Validator</th><th>Total</th><th>Share of Top</th><th>Active Days</th><th>Avg / Active Day</th><th>Best Day</th>
+      <th>Eligible</th><th>Ineligible</th><th>Deferred</th>
+      <th>Sep 13</th><th>Sep 16</th><th>Sep 17</th><th>Sep 18</th><th>Sep 21</th><th>Sep 22</th><th>Sep 23</th><th>Sep 24</th><th>Sep 25</th><th>Sep 26</th><th>Sep 27</th><th>Sep 28</th><th>vs Team Avg</th>
+    </tr></thead><tbody>
+      <tr><td class="mono">1</td><td class="loc">Gil Augdito Maraguinot</td><td class="mono"><b>647</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:100%"></div></div><span class="mono">100%</span></div></td><td class="mono">7</td><td class="mono">92.4</td><td class="mono">125 <span class="h-sub">Sep 27</span></td><td class="mono">554</td><td class="mono">93</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">56</td><td class="mono dc">68</td><td class="mono dc">78</td><td class="mono dc">84</td><td class="mono dc">115</td><td class="mono dc">121</td><td class="mono dc">125</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="92.4"><span class="badge badge-hi">Above avg</span></td></tr>
+      <tr><td class="mono">2</td><td class="loc">Ethel Boyles Acuram</td><td class="mono"><b>602</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:93.0%"></div></div><span class="mono">93.0%</span></div></td><td class="mono">5</td><td class="mono">120.4</td><td class="mono">190 <span class="h-sub">Sep 25</span></td><td class="mono">588</td><td class="mono">12</td><td class="mono">2</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">107</td><td class="mono dc">144</td><td class="mono dc">115</td><td class="mono dc">46</td><td class="mono dc">190</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="120.4"><span class="badge badge-hi">Above avg</span></td></tr>
+      <tr><td class="mono">3</td><td class="loc">Rhuan Dogon Crisologo</td><td class="mono"><b>462</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:71.4%"></div></div><span class="mono">71.4%</span></div></td><td class="mono">7</td><td class="mono">66.0</td><td class="mono">118 <span class="h-sub">Sep 22</span></td><td class="mono">359</td><td class="mono">103</td><td class="mono">0</td><td class="mono dc">–</td><td class="mono dc">74</td><td class="mono dc">98</td><td class="mono dc">–</td><td class="mono dc">47</td><td class="mono dc">118</td><td class="mono dc">51</td><td class="mono dc">68</td><td class="mono dc">6</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="66.0"><span class="badge badge-hi">Above avg</span></td></tr>
+      <tr><td class="mono">4</td><td class="loc">Jaymar Ruiz</td><td class="mono"><b>456</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:70.5%"></div></div><span class="mono">70.5%</span></div></td><td class="mono">7</td><td class="mono">65.1</td><td class="mono">123 <span class="h-sub">Sep 24</span></td><td class="mono">423</td><td class="mono">33</td><td class="mono">0</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">63</td><td class="mono dc">95</td><td class="mono dc">93</td><td class="mono dc">123</td><td class="mono dc">61</td><td class="mono dc">20</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="65.1"><span class="badge badge-hi">Above avg</span></td></tr>
+      <tr><td class="mono">5</td><td class="loc">Kent Anthony Maniwang Montero</td><td class="mono"><b>396</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:61.2%"></div></div><span class="mono">61.2%</span></div></td><td class="mono">7</td><td class="mono">56.6</td><td class="mono">109 <span class="h-sub">Sep 21</span></td><td class="mono">231</td><td class="mono">162</td><td class="mono">2</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">48</td><td class="mono dc">109</td><td class="mono dc">10</td><td class="mono dc">16</td><td class="mono dc">107</td><td class="mono dc">82</td><td class="mono dc">24</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="56.6"><span class="badge badge-hi">Above avg</span></td></tr>
+      <tr><td class="mono">6</td><td class="loc">Jennifer Abella Cañete</td><td class="mono"><b>365</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:56.4%"></div></div><span class="mono">56.4%</span></div></td><td class="mono">9</td><td class="mono">40.6</td><td class="mono">86 <span class="h-sub">Sep 16</span></td><td class="mono">305</td><td class="mono">35</td><td class="mono">25</td><td class="mono dc">–</td><td class="mono dc">86</td><td class="mono dc">–</td><td class="mono dc">14</td><td class="mono dc">45</td><td class="mono dc">49</td><td class="mono dc">25</td><td class="mono dc">55</td><td class="mono dc">72</td><td class="mono dc">16</td><td class="mono dc">3</td><td class="mono dc">–</td><td data-v="40.6"><span class="badge badge-wait">Below avg</span></td></tr>
+      <tr><td class="mono">7</td><td class="loc">Adrian Baron Colao</td><td class="mono"><b>413</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:63.8%"></div></div><span class="mono">63.8%</span></div></td><td class="mono">4</td><td class="mono">103.3</td><td class="mono">138 <span class="h-sub">Sep 24</span></td><td class="mono">335</td><td class="mono">69</td><td class="mono">9</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">44</td><td class="mono dc">101</td><td class="mono dc">62</td><td class="mono dc">138</td><td class="mono dc">68</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="103.3"><span class="badge badge-hi">Above avg</span></td></tr>
+      <tr><td class="mono">8</td><td class="loc">Michael Sam Orque Flores</td><td class="mono"><b>332</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:51.3%"></div></div><span class="mono">51.3%</span></div></td><td class="mono">6</td><td class="mono">55.3</td><td class="mono">120 <span class="h-sub">Sep 23</span></td><td class="mono">174</td><td class="mono">157</td><td class="mono">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">22</td><td class="mono dc">2</td><td class="mono dc">52</td><td class="mono dc">120</td><td class="mono dc">80</td><td class="mono dc">56</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="55.3"><span class="badge badge-live">Near avg</span></td></tr>
+      <tr><td class="mono">9</td><td class="loc">Ediepearl Enad Selma</td><td class="mono"><b>319</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:49.3%"></div></div><span class="mono">49.3%</span></div></td><td class="mono">5</td><td class="mono">63.8</td><td class="mono">95 <span class="h-sub">Sep 23</span></td><td class="mono">225</td><td class="mono">91</td><td class="mono">3</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">1</td><td class="mono dc">66</td><td class="mono dc">95</td><td class="mono dc">65</td><td class="mono dc">59</td><td class="mono dc">33</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="63.8"><span class="badge badge-hi">Above avg</span></td></tr>
+      <tr><td class="mono">10</td><td class="loc">John Erick Basbas Cabusao</td><td class="mono"><b>310</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:47.9%"></div></div><span class="mono">47.9%</span></div></td><td class="mono">6</td><td class="mono">51.7</td><td class="mono">74 <span class="h-sub">Sep 22</span></td><td class="mono">164</td><td class="mono">145</td><td class="mono">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">59</td><td class="mono dc">74</td><td class="mono dc">47</td><td class="mono dc">52</td><td class="mono dc">56</td><td class="mono dc">22</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="51.7"><span class="badge badge-live">Near avg</span></td></tr>
+      <tr><td class="mono">11</td><td class="loc">Christine Mae Baterna Lirasan</td><td class="mono"><b>298</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:46.1%"></div></div><span class="mono">46.1%</span></div></td><td class="mono">7</td><td class="mono">42.6</td><td class="mono">66 <span class="h-sub">Sep 21</span></td><td class="mono">222</td><td class="mono">58</td><td class="mono">18</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">66</td><td class="mono dc">59</td><td class="mono dc">60</td><td class="mono dc">63</td><td class="mono dc">49</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="42.6"><span class="badge badge-wait">Below avg</span></td></tr>
+      <tr><td class="mono">12</td><td class="loc">Ens Angelaine Faith Cabusas Mantua</td><td class="mono"><b>293</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:45.3%"></div></div><span class="mono">45.3%</span></div></td><td class="mono">6</td><td class="mono">48.8</td><td class="mono">111 <span class="h-sub">Sep 22</span></td><td class="mono">201</td><td class="mono">84</td><td class="mono">8</td><td class="mono dc">–</td><td class="mono dc">48</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">23</td><td class="mono dc">111</td><td class="mono dc">–</td><td class="mono dc">78</td><td class="mono dc">32</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="48.8"><span class="badge badge-live">Near avg</span></td></tr>
+      <tr><td class="mono">13</td><td class="loc">Mae Ann Otar Tonil</td><td class="mono"><b>272</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:42.0%"></div></div><span class="mono">42.0%</span></div></td><td class="mono">8</td><td class="mono">34.0</td><td class="mono">71 <span class="h-sub">Sep 25</span></td><td class="mono">233</td><td class="mono">35</td><td class="mono">4</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">1</td><td class="mono dc">45</td><td class="mono dc">41</td><td class="mono dc">60</td><td class="mono dc">52</td><td class="mono dc">71</td><td class="mono dc">2</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="34.0"><span class="badge badge-wait">Below avg</span></td></tr>
+      <tr><td class="mono">14</td><td class="loc">Jaryl Latonio Dejito</td><td class="mono"><b>253</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:39.1%"></div></div><span class="mono">39.1%</span></div></td><td class="mono">4</td><td class="mono">63.3</td><td class="mono">145 <span class="h-sub">Sep 24</span></td><td class="mono">226</td><td class="mono">14</td><td class="mono">13</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">30</td><td class="mono dc">–</td><td class="mono dc">32</td><td class="mono dc">145</td><td class="mono dc">46</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="63.3"><span class="badge badge-hi">Above avg</span></td></tr>
+      <tr><td class="mono">15</td><td class="loc">Charlene Oted Sevillita</td><td class="mono"><b>243</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:37.6%"></div></div><span class="mono">37.6%</span></div></td><td class="mono">6</td><td class="mono">40.5</td><td class="mono">107 <span class="h-sub">Sep 22</span></td><td class="mono">206</td><td class="mono">35</td><td class="mono">2</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">26</td><td class="mono dc">107</td><td class="mono dc">44</td><td class="mono dc">19</td><td class="mono dc">46</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="40.5"><span class="badge badge-wait">Below avg</span></td></tr>
+      <tr><td class="mono">16</td><td class="loc">Leonidas Requierme Pescones Jr.</td><td class="mono"><b>240</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:37.1%"></div></div><span class="mono">37.1%</span></div></td><td class="mono">4</td><td class="mono">60.0</td><td class="mono">85 <span class="h-sub">Sep 23</span></td><td class="mono">102</td><td class="mono">137</td><td class="mono">1</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">85</td><td class="mono dc">81</td><td class="mono dc">74</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="60.0"><span class="badge badge-hi">Above avg</span></td></tr>
+      <tr><td class="mono">17</td><td class="loc">Joven Jimenez Calma</td><td class="mono"><b>228</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:35.2%"></div></div><span class="mono">35.2%</span></div></td><td class="mono">3</td><td class="mono">76.0</td><td class="mono">95 <span class="h-sub">Sep 24</span></td><td class="mono">134</td><td class="mono">89</td><td class="mono">5</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">56</td><td class="mono dc">–</td><td class="mono dc">77</td><td class="mono dc">95</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="76.0"><span class="badge badge-hi">Above avg</span></td></tr>
+      <tr><td class="mono">18</td><td class="loc">Jemelyn Batoto Canoy</td><td class="mono"><b>202</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:31.2%"></div></div><span class="mono">31.2%</span></div></td><td class="mono">6</td><td class="mono">33.7</td><td class="mono">52 <span class="h-sub">Sep 21</span></td><td class="mono">161</td><td class="mono">35</td><td class="mono">6</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">45</td><td class="mono dc">23</td><td class="mono dc">52</td><td class="mono dc">18</td><td class="mono dc">24</td><td class="mono dc">40</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="33.7"><span class="badge badge-wait">Below avg</span></td></tr>
+      <tr><td class="mono">19</td><td class="loc">Juwel Amasora Robin</td><td class="mono"><b>193</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:29.8%"></div></div><span class="mono">29.8%</span></div></td><td class="mono">4</td><td class="mono">48.3</td><td class="mono">87 <span class="h-sub">Sep 23</span></td><td class="mono">145</td><td class="mono">26</td><td class="mono">22</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">10</td><td class="mono dc">47</td><td class="mono dc">87</td><td class="mono dc">49</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="48.3"><span class="badge badge-live">Near avg</span></td></tr>
+      <tr><td class="mono">20</td><td class="loc">Daniela So Gilig</td><td class="mono"><b>181</b></td><td><div class="pct-bar-wrap"><div class="pct-track"><div class="pct-fill" style="width:28.0%"></div></div><span class="mono">28.0%</span></div></td><td class="mono">6</td><td class="mono">30.2</td><td class="mono">68 <span class="h-sub">Sep 24</span></td><td class="mono">139</td><td class="mono">35</td><td class="mono">7</td><td class="mono dc">–</td><td class="mono dc">37</td><td class="mono dc">1</td><td class="mono dc">–</td><td class="mono dc">18</td><td class="mono dc">4</td><td class="mono dc">25</td><td class="mono dc">68</td><td class="mono dc">28</td><td class="mono dc">–</td><td class="mono dc">–</td><td class="mono dc">–</td><td data-v="30.2"><span class="badge badge-wait">Below avg</span></td></tr>
+    </tbody></table>
+  </div></div>
+  <p style="font-size:12px;color:var(--muted);margin:-18px 0 28px">Top 20 validators shown. Eligible / Ineligible / Deferred from the recommendation pivot. "vs Team Avg" compares each validator's avg per active day with the team average of 55.5 (±15% = near average).</p>
+  <div class="insights"><h3>💡 Key Executive Insights</h3>
+    <div class="insight-item"><div class="insight-icon ic-up">🏆</div><div class="insight-text"><strong>Gil Augdito Maraguinot now leads validators</strong> with 647 validations (7 active days, 92.4 avg), overtaking Ethel Boyles Acuram (602, 120.4 avg — highest per-day average). Rhuan Dogon Crisologo is third at 462.</div></div>
+    <div class="insight-item"><div class="insight-icon ic-up">📈</div><div class="insight-text"><strong>Overall progress is now 18.7%</strong> (8,984 of 48,082), up 776 on Sept 27–28. Cebu Province leads at 20.5%, ahead of Bohol (19.2%), City of Cebu (17.8%) and City of Mandaue (10.1%).</div></div>
+    <div class="insight-item"><div class="insight-icon ic-up">🧾</div><div class="insight-text"><strong>Quality is holding strong:</strong> 6,807 Eligible (75.8%), 2,011 Ineligible (22.4%), 164 Deferred (1.8%), 0 Deceased. Of 721 records with "other status," 657 (91.1%) are Active, 43 Unlocated, 15 Unknown, 3 Duplicate, 3 Transfer.</div></div>
+    <div class="insight-item"><div class="insight-icon ic-warn">⚠️</div><div class="insight-text"><strong>City of Talisay (1,277) remains untouched</strong>, alongside Tubigon (976) and City of Tagbilaran (939). Combined with City of Carcar (860), Balamban (739), Minglanilla (686) and Tuburan (684), the top 10 untouched LGUs hold about 34% of the remaining target.</div></div>
+    <div class="insight-item"><div class="insight-icon ic-warn">⚡</div><div class="insight-text"><strong>Pace cooled sharply:</strong> 2,315 (Sept 24) → 1,665 (Sept 25) → 420 (Sept 26) → 3 (Sept 27) → 47 (Sept 28). The last-3-day average is 1,733/day, so the remaining 39,098 needs about 23 more reporting days at that pace.</div></div>
+    <div class="insight-item"><div class="insight-icon ic-warn">🚨</div><div class="insight-text"><strong>Weekend gap is significant.</strong> Sept 27 (Sunday) logged only 3 validations and Sept 28 only 47. If weekend work isn't scheduled, the Oct 15 target slips — the close-the-gap plan plus weekend work finishes around Oct 14, but weekday-only finishes closer to Oct 21.</div></div>
+  </div>
+</div>
+
+
+<!-- ===================== PREVIOUS VARIANCE ===================== -->
+<div class="tab-panel" id="tab-batch">
+  <p class="section-title">📉 LGU Previous Variance — Batches 1 to 3</p>
+
+  <div class="card" style="padding:18px 20px;margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+      <div>
+        <div class="hero-label">Total Previous Variance</div>
+        <div class="hero-num" style="font-size:40px">1,856</div>
+        <div class="batch-kpi-note">Total previous variance recorded across Batch 1, Batch 2 and Batch 3 in the supplied LGU variance reference.</div>
+      </div>
+      <div class="hero-badges">
+        <span class="badge badge-hi">● 54 LGUs</span>
+        <span class="badge badge-live">● 25 officers / units</span>
+        <span class="badge badge-defer">● 5 coverage areas</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-grid" style="margin-bottom:18px">
+    <div class="kpi">
+      <div class="kpi-label">Batch 1 Variance</div>
+      <div class="kpi-value">283</div>
+      <div class="kpi-sub neutral">Share of displayed previous variance</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Batch 2 Variance</div>
+      <div class="kpi-value">118</div>
+      <div class="kpi-sub neutral">Share of displayed previous variance</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Batch 3 Variance</div>
+      <div class="kpi-value">1,455</div>
+      <div class="kpi-sub neutral">Share of displayed previous variance</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Total Previous Variance</div>
+      <div class="kpi-value">1,856</div>
+      <div class="kpi-sub up">Across all displayed variance rows</div>
+    </div>
+  </div>
+
+  <div class="split-grid">
+    <div class="split-card">
+      <h4>📦 Previous Variance by Batch</h4>
+      <div class="split-row">
+        <span class="split-label">Batch 1</span>
+        <div class="split-track"><div class="split-fill" style="width:15.2%;background:var(--brand)"></div></div>
+        <span class="split-val" style="color:var(--brand)">283</span>
+      </div>
+      <div class="split-row">
+        <span class="split-label">Batch 2</span>
+        <div class="split-track"><div class="split-fill" style="width:6.4%;background:#0891b2"></div></div>
+        <span class="split-val" style="color:#0891b2">118</span>
+      </div>
+      <div class="split-row">
+        <span class="split-label">Batch 3</span>
+        <div class="split-track"><div class="split-fill" style="width:78.4%;background:#d97706"></div></div>
+        <span class="split-val" style="color:#d97706">1,455</span>
+      </div>
+      <div class="split-row" style="border-top:2px solid var(--border);margin-top:6px;padding-top:10px;">
+        <span class="split-label" style="font-weight:800">All Batches</span>
+        <div class="split-track" style="opacity:.4"></div>
+        <span class="split-val" style="font-weight:800">1,856</span>
+      </div>
+    </div>
+
+    <div class="split-card batch-area-card">
+      <h4>📍 Previous Variance by Area</h4>
+      <div class="area-row"><span class="area-label">Bohol</span><div class="area-track"><div class="area-fill" style="width:6.6%"></div></div><span class="area-val">123</span></div><div class="area-row"><span class="area-label">Cebu Province</span><div class="area-track"><div class="area-fill" style="width:79.4%"></div></div><span class="area-val">1,474</span></div><div class="area-row"><span class="area-label">City of Cebu</span><div class="area-track"><div class="area-fill" style="width:11.9%"></div></div><span class="area-val">220</span></div><div class="area-row"><span class="area-label">City of Lapu-Lapu</span><div class="area-track"><div class="area-fill" style="width:0.8%"></div></div><span class="area-val">14</span></div><div class="area-row"><span class="area-label">City of Mandaue</span><div class="area-track"><div class="area-fill" style="width:1.3%"></div></div><span class="area-val">25</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="batch-toolbar">
+      <input id="bq" placeholder="Search LGU, officer or code…">
+      <button class="batch-chip on" data-bf="">All Areas</button>
+      <button class="batch-chip" data-bf="Bohol">Bohol</button>
+      <button class="batch-chip" data-bf="Cebu Province">Cebu Province</button>
+      <button class="batch-chip" data-bf="City of Cebu">City of Cebu</button>
+      <button class="batch-chip" data-bf="City of Lapu-Lapu">Lapu-Lapu</button>
+      <button class="batch-chip" data-bf="City of Mandaue">Mandaue</button>
+      <span class="batch-meta" id="bcnt">54 LGUs shown</span>
+    </div>
+    <div class="batch-toolbar" style="padding-top:0">
+      <button class="batch-chip on" data-bb="">All Batches</button>
+      <button class="batch-chip" data-bb="1">Batch 1</button>
+      <button class="batch-chip" data-bb="2">Batch 2</button>
+      <button class="batch-chip" data-bb="3">Batch 3</button>
+    </div>
+    <div class="batch-legend">
+      <span><i class="b1-swatch"></i>Batch 1</span>
+      <span><i class="b2-swatch"></i>Batch 2</span>
+      <span><i class="b3-swatch"></i>Batch 3</span>
+      <span><i class="gt-swatch"></i>Grand Total</span>
+    </div>
+    <div class="table-scroll" style="max-height:640px;overflow:auto">
+      <table class="st sortable batch-table" id="bt" style="min-width:1100px">
+        <thead><tr>
+          <th>Province / Category</th>
+          <th>LGU</th>
+          <th>Assigned Officer / Unit (2026)</th>
+          <th>Officer Code</th>
+          <th>Batch 1</th>
+          <th>Batch 2</th>
+          <th>Batch 3</th>
+          <th>Grand Total</th>
+        </tr></thead>
+        <tbody>
+          <tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Anda">Anda</td><td class="" data-v="TORREGESA, ISMAEL III CABANES">TORREGESA, ISMAEL III CABANES</td><td class="mono" data-v="ICT">ICT</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="1">1</td><td class="mono batch-num gt" data-v="1">1</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Buenavista">Buenavista</td><td class="" data-v="ROBIN, JUWEL AMASORA">ROBIN, JUWEL AMASORA</td><td class="mono" data-v="JAR">JAR</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="3">3</td><td class="mono batch-num gt" data-v="3">3</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Candijay">Candijay</td><td class="" data-v="TORREGESA, ISMAEL III CABANES">TORREGESA, ISMAEL III CABANES</td><td class="mono" data-v="ICT">ICT</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="5">5</td><td class="mono batch-num gt" data-v="5">5</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Carmen">Carmen</td><td class="" data-v="EJERCITO, EDILBERTO LARANJO">EJERCITO, EDILBERTO LARANJO</td><td class="mono" data-v="ELE">ELE</td><td class="mono batch-num b1" data-v="19">19</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="8">8</td><td class="mono batch-num gt" data-v="27">27</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Danao">Danao</td><td class="" data-v="MARAGUINOT, GIL AUGDITO">MARAGUINOT, GIL AUGDITO</td><td class="mono" data-v="GAM">GAM</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="1">1</td><td class="mono batch-num gt" data-v="1">1</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="DAUIS">DAUIS</td><td class="" data-v="LLORENTE, JOVY LUPOT">LLORENTE, JOVY LUPOT</td><td class="mono" data-v="JLL">JLL</td><td class="mono batch-num b1" data-v="8">8</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="8">8</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Loon">Loon</td><td class="" data-v="TORREGESA, ISMAEL III CABANES">TORREGESA, ISMAEL III CABANES</td><td class="mono" data-v="ICT">ICT</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="4">4</td><td class="mono batch-num gt" data-v="4">4</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="PANGLAO">PANGLAO</td><td class="" data-v="LLORENTE, JOVY LUPOT">LLORENTE, JOVY LUPOT</td><td class="mono" data-v="JLL">JLL</td><td class="mono batch-num b1" data-v="5">5</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="5">5</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Pilar">Pilar</td><td class="" data-v="ROBIN, JUWEL AMASORA">ROBIN, JUWEL AMASORA</td><td class="mono" data-v="JRA">JRA</td><td class="mono batch-num b1" data-v="1">1</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="1">1</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Pilar Bohol">Pilar Bohol</td><td class="" data-v="ROBIN, JUWEL AMASORA">ROBIN, JUWEL AMASORA</td><td class="mono" data-v="JRA">JRA</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="3">3</td><td class="mono batch-num gt" data-v="3">3</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="SAGBAYAN">SAGBAYAN</td><td class="" data-v="EJERCITO, EDILBERTO LARANJO">EJERCITO, EDILBERTO LARANJO</td><td class="mono" data-v="ELE">ELE</td><td class="mono batch-num b1" data-v="2">2</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="2">2</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Sierra Bullones">Sierra Bullones</td><td class="" data-v="ROBIN, JUWEL AMASORA">ROBIN, JUWEL AMASORA</td><td class="mono" data-v="JRA">JRA</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="1">1</td><td class="mono batch-num b3" data-v="3">3</td><td class="mono batch-num gt" data-v="4">4</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Talibon">Talibon</td><td class="" data-v="MARAGUINOT, GIL AUGDITO">MARAGUINOT, GIL AUGDITO</td><td class="mono" data-v="GAM">GAM</td><td class="mono batch-num b1" data-v="16">16</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="32">32</td><td class="mono batch-num gt" data-v="48">48</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="UBAY">UBAY</td><td class="" data-v="ACURAM, ETHEL BOYLES">ACURAM, ETHEL BOYLES</td><td class="mono" data-v="EBA">EBA</td><td class="mono batch-num b1" data-v="10">10</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="10">10</td></tr>
+<tr data-area="Bohol"><td class="" data-v="Bohol">Bohol</td><td class="loc" data-v="Valencia">Valencia</td><td class="" data-v="NUEZ, IAN LIBOT">NUEZ, IAN LIBOT</td><td class="mono" data-v="ILN">ILN</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="1">1</td><td class="mono batch-num gt" data-v="1">1</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Alcantara">Alcantara</td><td class="" data-v="VILLARINO, SWEETZEL VILLANUEVA">VILLARINO, SWEETZEL VILLANUEVA</td><td class="mono" data-v="SVV">SVV</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="5">5</td><td class="mono batch-num b3" data-v="9">9</td><td class="mono batch-num gt" data-v="14">14</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="ALOGUINSIN">ALOGUINSIN</td><td class="" data-v="ALOQUINSIN, JAYMAR">ALOQUINSIN, JAYMAR</td><td class="mono" data-v="JR">JR</td><td class="mono batch-num b1" data-v="2">2</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="2">2</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Argao">Argao</td><td class="" data-v="CAÑETE, JENNIFER ABELLA">CAÑETE, JENNIFER ABELLA</td><td class="mono" data-v="JAC">JAC</td><td class="mono batch-num b1" data-v="1">1</td><td class="mono batch-num b2" data-v="20">20</td><td class="mono batch-num b3" data-v="60">60</td><td class="mono batch-num gt" data-v="81">81</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Badian">Badian</td><td class="" data-v="LAGANG, RAMARLITO ELORDE">LAGANG, RAMARLITO ELORDE</td><td class="mono" data-v="REL">REL</td><td class="mono batch-num b1" data-v="5">5</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="56">56</td><td class="mono batch-num gt" data-v="61">61</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Balamban">Balamban</td><td class="" data-v="LAGANG, RAMARLITO ELORDE">LAGANG, RAMARLITO ELORDE</td><td class="mono" data-v="REL">REL</td><td class="mono batch-num b1" data-v="43">43</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="113">113</td><td class="mono batch-num gt" data-v="156">156</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="BANTAYAN">BANTAYAN</td><td class="" data-v="CANOY, JEMELYN BATOTO">CANOY, JEMELYN BATOTO</td><td class="mono" data-v="JBC">JBC</td><td class="mono batch-num b1" data-v="2">2</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="2">2</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Barili">Barili</td><td class="" data-v="DEJITO, JARYL LATONIO">DEJITO, JARYL LATONIO</td><td class="mono" data-v="JLD">JLD</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="78">78</td><td class="mono batch-num gt" data-v="78">78</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="BORBON">BORBON</td><td class="" data-v="LIRASAN, CHRISTINE MAE BATERNA">LIRASAN, CHRISTINE MAE BATERNA</td><td class="mono" data-v="CMBL">CMBL</td><td class="mono batch-num b1" data-v="14">14</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="14">14</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Carmen Cebu">Carmen Cebu</td><td class="" data-v="CANOY, JEMELYN BATOTO">CANOY, JEMELYN BATOTO</td><td class="mono" data-v="JBC">JBC</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="18">18</td><td class="mono batch-num gt" data-v="18">18</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Catmon">Catmon</td><td class="" data-v="CAÑETE, JENNIFER ABELLA">CAÑETE, JENNIFER ABELLA</td><td class="mono" data-v="JAC">JAC</td><td class="mono batch-num b1" data-v="1">1</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="45">45</td><td class="mono batch-num gt" data-v="46">46</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="City of Carcar">City of Carcar</td><td class="" data-v="DEJITO, JARYL LATONIO">DEJITO, JARYL LATONIO</td><td class="mono" data-v="JLD">JLD</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="104">104</td><td class="mono batch-num gt" data-v="104">104</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="CITY OF NAGA">CITY OF NAGA</td><td class="" data-v="GABAYAN, PAMELA TAMPUS">GABAYAN, PAMELA TAMPUS</td><td class="mono" data-v="PTG">PTG</td><td class="mono batch-num b1" data-v="4">4</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="4">4</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="CITY OF TALISAY">CITY OF TALISAY</td><td class="" data-v="FLORES, MICHAEL SAM ORQUE">FLORES, MICHAEL SAM ORQUE</td><td class="mono" data-v="MSOF">MSOF</td><td class="mono batch-num b1" data-v="1">1</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="1">1</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="CITY OF TOLEDO">CITY OF TOLEDO</td><td class="" data-v="MANTUA, ENS ANGELAINE FAITH CABUSAS">MANTUA, ENS ANGELAINE FAITH CABUSAS</td><td class="mono" data-v="EAFCM">EAFCM</td><td class="mono batch-num b1" data-v="3">3</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="3">3</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Compostela">Compostela</td><td class="" data-v="CRISOLOGO, RHUAN DOGON">CRISOLOGO, RHUAN DOGON</td><td class="mono" data-v="RDC">RDC</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="22">22</td><td class="mono batch-num gt" data-v="22">22</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Consolacion">Consolacion</td><td class="" data-v="CALMA, JOVEN JIMENEZ">CALMA, JOVEN JIMENEZ</td><td class="mono" data-v="JJC">JJC</td><td class="mono batch-num b1" data-v="4">4</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="1">1</td><td class="mono batch-num gt" data-v="5">5</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Cordova">Cordova</td><td class="" data-v="GILIG, DANIELA SO">GILIG, DANIELA SO</td><td class="mono" data-v="DSG">DSG</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="2">2</td><td class="mono batch-num gt" data-v="2">2</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Daangbantayan">Daangbantayan</td><td class="" data-v="SENIEDO, CHARLOTTE LYN ORIAS">SENIEDO, CHARLOTTE LYN ORIAS</td><td class="mono" data-v="CLOS">CLOS</td><td class="mono batch-num b1" data-v="41">41</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="10">10</td><td class="mono batch-num gt" data-v="51">51</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Dalaguete">Dalaguete</td><td class="" data-v="GABAYAN, PAMELA TAMPUS">GABAYAN, PAMELA TAMPUS</td><td class="mono" data-v="PTG">PTG</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="39">39</td><td class="mono batch-num gt" data-v="39">39</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Danao City">Danao City</td><td class="" data-v="CALMA, JOVEN JIMENEZ">CALMA, JOVEN JIMENEZ</td><td class="mono" data-v="JJC">JJC</td><td class="mono batch-num b1" data-v="1">1</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="139">139</td><td class="mono batch-num gt" data-v="140">140</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Dumanjug">Dumanjug</td><td class="" data-v="CAÑETE, JENNIFER ABELLA">CAÑETE, JENNIFER ABELLA</td><td class="mono" data-v="JAC">JAC</td><td class="mono batch-num b1" data-v="7">7</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="39">39</td><td class="mono batch-num gt" data-v="46">46</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Liloan">Liloan</td><td class="" data-v="MARTEL, MELVIN CABELLES">MARTEL, MELVIN CABELLES</td><td class="mono" data-v="MCMM">MCMM</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="104">104</td><td class="mono batch-num gt" data-v="104">104</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Malabuyoc">Malabuyoc</td><td class="" data-v="MANTUA, ENS ANGELAINE FAITH CABUSAS">MANTUA, ENS ANGELAINE FAITH CABUSAS</td><td class="mono" data-v="EAFCM">EAFCM</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="27">27</td><td class="mono batch-num gt" data-v="27">27</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Medellin">Medellin</td><td class="" data-v="CRISOLOGO, RHUAN DOGON">CRISOLOGO, RHUAN DOGON</td><td class="mono" data-v="RDC">RDC</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="29">29</td><td class="mono batch-num gt" data-v="29">29</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="MINGLANILLA">MINGLANILLA</td><td class="" data-v="GABAYAN, PAMELA TAMPUS">GABAYAN, PAMELA TAMPUS</td><td class="mono" data-v="PTG">PTG</td><td class="mono batch-num b1" data-v="2">2</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="2">2</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Moalboal">Moalboal</td><td class="" data-v="MARTEL, MELVIN CABELLES">MARTEL, MELVIN CABELLES</td><td class="mono" data-v="MCMM">MCMM</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="16">16</td><td class="mono batch-num gt" data-v="16">16</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Oslob">Oslob</td><td class="" data-v="COLAO, ADRIAN BARON">COLAO, ADRIAN BARON</td><td class="mono" data-v="ABC">ABC</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="13">13</td><td class="mono batch-num gt" data-v="13">13</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Pilar">Pilar</td><td class="" data-v="LAGANG, RAMARLITO ELORDE">LAGANG, RAMARLITO ELORDE</td><td class="mono" data-v="REL">REL</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="4">4</td><td class="mono batch-num gt" data-v="4">4</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Ronda">Ronda</td><td class="" data-v="MARTEL, MELVIN CABELLES">MARTEL, MELVIN CABELLES</td><td class="mono" data-v="MCMM">MCMM</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="14">14</td><td class="mono batch-num gt" data-v="14">14</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="San Fernando">San Fernando</td><td class="" data-v="VILLARINO, SWEETZEL VILLANUEVA">VILLARINO, SWEETZEL VILLANUEVA</td><td class="mono" data-v="SVV">SVV</td><td class="mono batch-num b1" data-v="7">7</td><td class="mono batch-num b2" data-v="48">48</td><td class="mono batch-num b3" data-v="46">46</td><td class="mono batch-num gt" data-v="101">101</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="SAN FRANCISCO">SAN FRANCISCO</td><td class="" data-v="FLORES, MICHAEL SAM ORQUE">FLORES, MICHAEL SAM ORQUE</td><td class="mono" data-v="MSOF">MSOF</td><td class="mono batch-num b1" data-v="2">2</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="2">2</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="San Remigio">San Remigio</td><td class="" data-v="CANOY, JEMELYN BATOTO">CANOY, JEMELYN BATOTO</td><td class="mono" data-v="JBC">JBC</td><td class="mono batch-num b1" data-v="1">1</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="54">54</td><td class="mono batch-num gt" data-v="55">55</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Sibonga">Sibonga</td><td class="" data-v="COLAO, ADRIAN BARON">COLAO, ADRIAN BARON</td><td class="mono" data-v="ABC">ABC</td><td class="mono batch-num b1" data-v="10">10</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="60">60</td><td class="mono batch-num gt" data-v="70">70</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Sogod">Sogod</td><td class="" data-v="DEJITO, JARYL LATONIO">DEJITO, JARYL LATONIO</td><td class="mono" data-v="JLD">JLD</td><td class="mono batch-num b1" data-v="1">1</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="54">54</td><td class="mono batch-num gt" data-v="55">55</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Tabogon">Tabogon</td><td class="" data-v="CRISOLOGO, RHUAN DOGON">CRISOLOGO, RHUAN DOGON</td><td class="mono" data-v="RDC">RDC</td><td class="mono batch-num b1" data-v="27">27</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="14">14</td><td class="mono batch-num gt" data-v="41">41</td></tr>
+<tr data-area="Cebu Province"><td class="" data-v="Cebu Province">Cebu Province</td><td class="loc" data-v="Tuburan">Tuburan</td><td class="" data-v="SENIEDO, CHARLOTTE LYN ORIAS">SENIEDO, CHARLOTTE LYN ORIAS</td><td class="mono" data-v="CLOS">CLOS</td><td class="mono batch-num b1" data-v="29">29</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="23">23</td><td class="mono batch-num gt" data-v="52">52</td></tr>
+<tr data-area="City of Cebu"><td class="" data-v="City of Cebu">City of Cebu</td><td class="loc" data-v="City of Cebu">City of Cebu</td><td class="" data-v="CABUSAO, JOHN ERICK BASBAS">CABUSAO, JOHN ERICK BASBAS</td><td class="mono" data-v="JEC">JEC</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="44">44</td><td class="mono batch-num b3" data-v="176">176</td><td class="mono batch-num gt" data-v="220">220</td></tr>
+<tr data-area="City of Lapu-Lapu"><td class="" data-v="City of Lapu-Lapu">City of Lapu-Lapu</td><td class="loc" data-v="CITY OF LAPU-LAPU">CITY OF LAPU-LAPU</td><td class="" data-v="CAPILITAN, REGGIE BAER">CAPILITAN, REGGIE BAER</td><td class="mono" data-v="RBC">RBC</td><td class="mono batch-num b1" data-v="14">14</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="0">0</td><td class="mono batch-num gt" data-v="14">14</td></tr>
+<tr data-area="City of Mandaue"><td class="" data-v="City of Mandaue">City of Mandaue</td><td class="loc" data-v="City of Mandaue">City of Mandaue</td><td class="" data-v="LIRASAN, CHRISTINE MAE BATERNA">LIRASAN, CHRISTINE MAE BATERNA</td><td class="mono" data-v="CMBL">CMBL</td><td class="mono batch-num b1" data-v="0">0</td><td class="mono batch-num b2" data-v="0">0</td><td class="mono batch-num b3" data-v="25">25</td><td class="mono batch-num gt" data-v="25">25</td></tr>
+        </tbody>
+        <tfoot><tr class="total">
+          <td class="loc">Grand Total</td><td></td><td></td><td></td>
+          <td class="mono b1" data-v="283">283</td>
+          <td class="mono b2" data-v="118">118</td>
+          <td class="mono b3" data-v="1455">1,455</td>
+          <td class="mono gt" data-v="1856"><b>1,856</b></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin:-18px 0 28px">
+    Reference data transcribed from the supplied screenshot “LGU Variance Analytics - Batches 1 to 3”. Grand totals above are the arithmetic sum of the displayed LGU rows.
+    Click a table heading to sort. Filters affect only the LGU allocation table.
+  </p>
+
+  <p class="section-title">👥 Assigned Officer / Unit Coverage</p>
+  <div class="card">
+    <div class="table-scroll" style="max-height:520px;overflow:auto">
+      <table class="st sortable batch-table" id="ot" style="min-width:920px">
+        <thead><tr>
+          <th>#</th><th>Assigned Officer / Unit</th><th>Officer Code</th><th>LGUs</th><th>Batch 1</th><th>Batch 2</th><th>Batch 3</th><th>Grand Total</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="mono" data-v="1">1</td><td class="loc" data-v="DEJITO, JARYL LATONIO">DEJITO, JARYL LATONIO</td><td class="mono" data-v="JLD">JLD</td><td class="mono" data-v="3">3</td><td class="mono b1" data-v="1">1</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="236">236</td><td class="mono gt" data-v="237"><b>237</b></td></tr>
+<tr><td class="mono" data-v="2">2</td><td class="loc" data-v="LAGANG, RAMARLITO ELORDE">LAGANG, RAMARLITO ELORDE</td><td class="mono" data-v="REL">REL</td><td class="mono" data-v="3">3</td><td class="mono b1" data-v="48">48</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="173">173</td><td class="mono gt" data-v="221"><b>221</b></td></tr>
+<tr><td class="mono" data-v="3">3</td><td class="loc" data-v="CABUSAO, JOHN ERICK BASBAS">CABUSAO, JOHN ERICK BASBAS</td><td class="mono" data-v="JEC">JEC</td><td class="mono" data-v="1">1</td><td class="mono b1" data-v="0">0</td><td class="mono b2" data-v="44">44</td><td class="mono b3" data-v="176">176</td><td class="mono gt" data-v="220"><b>220</b></td></tr>
+<tr><td class="mono" data-v="4">4</td><td class="loc" data-v="CAÑETE, JENNIFER ABELLA">CAÑETE, JENNIFER ABELLA</td><td class="mono" data-v="JAC">JAC</td><td class="mono" data-v="3">3</td><td class="mono b1" data-v="9">9</td><td class="mono b2" data-v="20">20</td><td class="mono b3" data-v="144">144</td><td class="mono gt" data-v="173"><b>173</b></td></tr>
+<tr><td class="mono" data-v="5">5</td><td class="loc" data-v="CALMA, JOVEN JIMENEZ">CALMA, JOVEN JIMENEZ</td><td class="mono" data-v="JJC">JJC</td><td class="mono" data-v="2">2</td><td class="mono b1" data-v="5">5</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="140">140</td><td class="mono gt" data-v="145"><b>145</b></td></tr>
+<tr><td class="mono" data-v="6">6</td><td class="loc" data-v="MARTEL, MELVIN CABELLES">MARTEL, MELVIN CABELLES</td><td class="mono" data-v="MCMM">MCMM</td><td class="mono" data-v="3">3</td><td class="mono b1" data-v="0">0</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="134">134</td><td class="mono gt" data-v="134"><b>134</b></td></tr>
+<tr><td class="mono" data-v="7">7</td><td class="loc" data-v="VILLARINO, SWEETZEL VILLANUEVA">VILLARINO, SWEETZEL VILLANUEVA</td><td class="mono" data-v="SVV">SVV</td><td class="mono" data-v="2">2</td><td class="mono b1" data-v="7">7</td><td class="mono b2" data-v="53">53</td><td class="mono b3" data-v="55">55</td><td class="mono gt" data-v="115"><b>115</b></td></tr>
+<tr><td class="mono" data-v="8">8</td><td class="loc" data-v="SENIEDO, CHARLOTTE LYN ORIAS">SENIEDO, CHARLOTTE LYN ORIAS</td><td class="mono" data-v="CLOS">CLOS</td><td class="mono" data-v="2">2</td><td class="mono b1" data-v="70">70</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="33">33</td><td class="mono gt" data-v="103"><b>103</b></td></tr>
+<tr><td class="mono" data-v="9">9</td><td class="loc" data-v="CRISOLOGO, RHUAN DOGON">CRISOLOGO, RHUAN DOGON</td><td class="mono" data-v="RDC">RDC</td><td class="mono" data-v="3">3</td><td class="mono b1" data-v="27">27</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="65">65</td><td class="mono gt" data-v="92"><b>92</b></td></tr>
+<tr><td class="mono" data-v="10">10</td><td class="loc" data-v="COLAO, ADRIAN BARON">COLAO, ADRIAN BARON</td><td class="mono" data-v="ABC">ABC</td><td class="mono" data-v="2">2</td><td class="mono b1" data-v="10">10</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="73">73</td><td class="mono gt" data-v="83"><b>83</b></td></tr>
+<tr><td class="mono" data-v="11">11</td><td class="loc" data-v="CANOY, JEMELYN BATOTO">CANOY, JEMELYN BATOTO</td><td class="mono" data-v="JBC">JBC</td><td class="mono" data-v="3">3</td><td class="mono b1" data-v="3">3</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="72">72</td><td class="mono gt" data-v="75"><b>75</b></td></tr>
+<tr><td class="mono" data-v="12">12</td><td class="loc" data-v="MARAGUINOT, GIL AUGDITO">MARAGUINOT, GIL AUGDITO</td><td class="mono" data-v="GAM">GAM</td><td class="mono" data-v="2">2</td><td class="mono b1" data-v="16">16</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="33">33</td><td class="mono gt" data-v="49"><b>49</b></td></tr>
+<tr><td class="mono" data-v="13">13</td><td class="loc" data-v="GABAYAN, PAMELA TAMPUS">GABAYAN, PAMELA TAMPUS</td><td class="mono" data-v="PTG">PTG</td><td class="mono" data-v="3">3</td><td class="mono b1" data-v="6">6</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="39">39</td><td class="mono gt" data-v="45"><b>45</b></td></tr>
+<tr><td class="mono" data-v="14">14</td><td class="loc" data-v="LIRASAN, CHRISTINE MAE BATERNA">LIRASAN, CHRISTINE MAE BATERNA</td><td class="mono" data-v="CMBL">CMBL</td><td class="mono" data-v="2">2</td><td class="mono b1" data-v="14">14</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="25">25</td><td class="mono gt" data-v="39"><b>39</b></td></tr>
+<tr><td class="mono" data-v="15">15</td><td class="loc" data-v="MANTUA, ENS ANGELAINE FAITH CABUSAS">MANTUA, ENS ANGELAINE FAITH CABUSAS</td><td class="mono" data-v="EAFCM">EAFCM</td><td class="mono" data-v="2">2</td><td class="mono b1" data-v="3">3</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="27">27</td><td class="mono gt" data-v="30"><b>30</b></td></tr>
+<tr><td class="mono" data-v="16">16</td><td class="loc" data-v="EJERCITO, EDILBERTO LARANJO">EJERCITO, EDILBERTO LARANJO</td><td class="mono" data-v="ELE">ELE</td><td class="mono" data-v="2">2</td><td class="mono b1" data-v="21">21</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="8">8</td><td class="mono gt" data-v="29"><b>29</b></td></tr>
+<tr><td class="mono" data-v="17">17</td><td class="loc" data-v="CAPILITAN, REGGIE BAER">CAPILITAN, REGGIE BAER</td><td class="mono" data-v="RBC">RBC</td><td class="mono" data-v="1">1</td><td class="mono b1" data-v="14">14</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="0">0</td><td class="mono gt" data-v="14"><b>14</b></td></tr>
+<tr><td class="mono" data-v="18">18</td><td class="loc" data-v="LLORENTE, JOVY LUPOT">LLORENTE, JOVY LUPOT</td><td class="mono" data-v="JLL">JLL</td><td class="mono" data-v="2">2</td><td class="mono b1" data-v="13">13</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="0">0</td><td class="mono gt" data-v="13"><b>13</b></td></tr>
+<tr><td class="mono" data-v="19">19</td><td class="loc" data-v="ROBIN, JUWEL AMASORA">ROBIN, JUWEL AMASORA</td><td class="mono" data-v="JRA">JRA</td><td class="mono" data-v="4">4</td><td class="mono b1" data-v="1">1</td><td class="mono b2" data-v="1">1</td><td class="mono b3" data-v="9">9</td><td class="mono gt" data-v="11"><b>11</b></td></tr>
+<tr><td class="mono" data-v="20">20</td><td class="loc" data-v="ACURAM, ETHEL BOYLES">ACURAM, ETHEL BOYLES</td><td class="mono" data-v="EBA">EBA</td><td class="mono" data-v="1">1</td><td class="mono b1" data-v="10">10</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="0">0</td><td class="mono gt" data-v="10"><b>10</b></td></tr>
+<tr><td class="mono" data-v="21">21</td><td class="loc" data-v="TORREGESA, ISMAEL III CABANES">TORREGESA, ISMAEL III CABANES</td><td class="mono" data-v="ICT">ICT</td><td class="mono" data-v="3">3</td><td class="mono b1" data-v="0">0</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="10">10</td><td class="mono gt" data-v="10"><b>10</b></td></tr>
+<tr><td class="mono" data-v="22">22</td><td class="loc" data-v="FLORES, MICHAEL SAM ORQUE">FLORES, MICHAEL SAM ORQUE</td><td class="mono" data-v="MSOF">MSOF</td><td class="mono" data-v="2">2</td><td class="mono b1" data-v="3">3</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="0">0</td><td class="mono gt" data-v="3"><b>3</b></td></tr>
+<tr><td class="mono" data-v="23">23</td><td class="loc" data-v="ALOQUINSIN, JAYMAR">ALOQUINSIN, JAYMAR</td><td class="mono" data-v="JR">JR</td><td class="mono" data-v="1">1</td><td class="mono b1" data-v="2">2</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="0">0</td><td class="mono gt" data-v="2"><b>2</b></td></tr>
+<tr><td class="mono" data-v="24">24</td><td class="loc" data-v="GILIG, DANIELA SO">GILIG, DANIELA SO</td><td class="mono" data-v="DSG">DSG</td><td class="mono" data-v="1">1</td><td class="mono b1" data-v="0">0</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="2">2</td><td class="mono gt" data-v="2"><b>2</b></td></tr>
+<tr><td class="mono" data-v="25">25</td><td class="loc" data-v="NUEZ, IAN LIBOT">NUEZ, IAN LIBOT</td><td class="mono" data-v="ILN">ILN</td><td class="mono" data-v="1">1</td><td class="mono b1" data-v="0">0</td><td class="mono b2" data-v="0">0</td><td class="mono b3" data-v="1">1</td><td class="mono gt" data-v="1"><b>1</b></td></tr>
+        </tbody>
+        <tfoot><tr class="total">
+          <td></td><td class="loc">All Officers / Units</td><td></td><td class="mono">54</td>
+          <td class="mono b1">283</td><td class="mono b2">118</td><td class="mono b3">1,455</td><td class="mono gt"><b>1,856</b></td>
+        </tr></tfoot>
+      </table>
+    </div>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin:-18px 0 28px">
+    Officer-level previous variance is aggregated from the displayed LGU previous variances; this is a derived roll-up of the displayed previous variance values.
+  </p>
+</div>
+
+</div>
+
+<script>
+(function(){
+document.querySelectorAll('.tabnav button').forEach(function(b){b.onclick=function(){
+  document.querySelectorAll('.tabnav button').forEach(function(x){x.classList.remove('active')});
+  document.querySelectorAll('.tab-panel').forEach(function(x){x.classList.remove('active')});
+  b.classList.add('active');document.getElementById('tab-'+b.dataset.tab).classList.add('active');window.scrollTo(0,0)}});
+var $=function(s){return document.querySelector(s)},need=$('#need'),pv=$('#pv'),R=39098,A=24;
+function calc(){var d=Math.max(1,+$('#wd').value||1);need.textContent=Math.ceil(R/d).toLocaleString();pv.textContent=Math.ceil(R/d/A)}
+$('#wd').oninput=calc;calc();
+document.querySelectorAll('.sortable').forEach(function(t){var dir={};
+ t.querySelectorAll('thead th').forEach(function(th,c){th.onclick=function(){var b=t.tBodies[0],rs=[].slice.call(b.rows);dir[c]=!dir[c];
+  rs.sort(function(x,y){var a=x.cells[c].dataset.v,z=y.cells[c].dataset.v;if(a===undefined)return 0;var n=!isNaN(a)&&!isNaN(z);return(n?a-z:a.localeCompare(z))*(dir[c]?1:-1)});rs.forEach(function(r){b.appendChild(r)})}})});
+var f='',q='';function flt(){var n=0;document.querySelectorAll('#lt tbody tr').forEach(function(r){var ok=(!f||r.dataset.p===f)&&(!q||r.cells[0].textContent.toLowerCase().indexOf(q)>-1);r.style.display=ok?'':'none';n+=ok});$('#cnt').textContent=n+' LGUs shown'}
+$('#q').oninput=function(){q=this.value.toLowerCase();flt()};
+document.querySelectorAll('.chip').forEach(function(b){b.onclick=function(){document.querySelectorAll('.chip').forEach(function(x){x.classList.remove('on')});b.classList.add('on');f=b.dataset.f;flt()}});flt();
+
+  var bf='', bq='', bb='';
+  function batchFilter(){
+    var n=0;
+    document.querySelectorAll('#bt tbody tr').forEach(function(r){
+      var hay=r.innerText.toLowerCase();
+      var okArea=!bf || r.dataset.area===bf;
+      var okQ=!bq || hay.indexOf(bq)>-1;
+      var okB=!bb || (parseInt(r.cells[4].textContent.replace(/,/g,''),10) > 0 && bb==='1')
+                    || (parseInt(r.cells[5].textContent.replace(/,/g,''),10) > 0 && bb==='2')
+                    || (parseInt(r.cells[6].textContent.replace(/,/g,''),10) > 0 && bb==='3');
+      r.style.display=(okArea && okQ && okB)?'':'none';
+      if(okArea && okQ && okB)n++;
+    });
+    $('#bcnt').textContent=n+' LGUs shown';
+  }
+  $('#bq').oninput=function(){bq=this.value.toLowerCase().trim();batchFilter()};
+  document.querySelectorAll('.batch-chip[data-bf]').forEach(function(b){
+    b.onclick=function(){
+      document.querySelectorAll('.batch-chip[data-bf]').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on'); bf=b.dataset.bf; batchFilter();
+    };
+  });
+  document.querySelectorAll('.batch-chip[data-bb]').forEach(function(b){
+    b.onclick=function(){
+      document.querySelectorAll('.batch-chip[data-bb]').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on'); bb=b.dataset.bb; batchFilter();
+    };
+  });
+  batchFilter();
+
+})();
+</script>
+</body>
+</html>
